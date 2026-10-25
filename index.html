@@ -176,9 +176,9 @@ tr.total td{font-weight:600;border-top:2px solid var(--line)}
         <div class="recs" id="recs"></div>
       </div>
       <div class="card stack">
-        <h3>Esneklik kredisi</h3>
+        <h3>Otel bazında beklenen etki</h3>
         <div class="tablewrap"><table id="tcred"></table></div>
-        <p class="foot"><strong>Tahmin</strong>: model çıktısı. <strong>Plan</strong>: onaylanan önerilere göre beklenen. <strong>Gerçekleşen</strong>: yalnız pilotta, uygulama sonrası sayaç ölçümüyle hesaplanır; bu panelde gösterilmez. Esneklik kredisi: otelin kritik saatlerdeki şebeke çekişinden düşürülen m³ (kaydırma ya da alternatif suyla ikame yoluyla), teşvik mekanizmasının önerilen ölçüsü.</p>
+        <p class="foot"><strong>Tahmin</strong>: model çıktısı. <strong>Plan</strong>: onaylanan önerilere göre beklenen. <strong>Gerçekleşen</strong>: yalnız pilotta, uygulama sonrası sayaç ölçümüyle hesaplanır; bu panelde gösterilmez. İkame ve kaydırma ayrı ölçülür; aynı su iki kez sayılmaz (ayrıntı: Teşvik görünümü).</p>
       </div>
     </div>
   </section>
@@ -205,7 +205,7 @@ tr.total td{font-weight:600;border-top:2px solid var(--line)}
           <li>ASAT SCADA ve otel sayaçlarından canlı veri; pilotta veri paylaşım protokolüyle sağlanacak.</li>
           <li>Basınç, debi ve şebeke hidroliği; misafir konforu gibi modellenmeyen hizmet kalitesi konuları.</li>
           <li>Arıtılmış su boru hattı, kalite ve izin süreci (Bakanlık görüşü gerekir).</li>
-          <li>Gerçek tarife ve esneklik kredisi ödemesi; pompa enerjisinin SCADA'dan ölçülmesi.</li>
+          <li>Gerçek tarife ve esneklik teşviki ödemesi; pompa enerjisinin SCADA'dan ölçülmesi.</li>
         </ul>
       </details>
       <details><summary>Kaynaklar</summary>
@@ -234,30 +234,31 @@ tr.total td{font-weight:600;border-top:2px solid var(--line)}
   </div>
 
   <div class="view" id="v-tesvik" role="tabpanel" aria-labelledby="tab-tesvik" hidden>
-    <p class="vbar"><span class="tag run">Çalışan · simülasyon</span>Kredi, onaylanan plandan hesaplanıyor. Ödeme ve tarife kısmı tasarım aşamasında.</p>
+    <p class="vbar"><span class="tag run">Çalışan · simülasyon</span><span>İki ölçü de onaylanan plandan <em>beklenen etki</em> olarak hesaplanıyor. Ödeme ve tarife kısmı tasarım aşamasında.</span></p>
     <section aria-labelledby="h-tesvik">
-      <div><div class="eyebrow">Teşvik görünümü</div><h2 id="h-tesvik">Esneklik kredisi: kritik saatte düşürülen her m³</h2></div>
+      <div><div class="eyebrow">Teşvik görünümü</div><h2 id="h-tesvik">Esneklik iki ayrı ölçüyle sayılır; aynı su iki kez sayılmaz</h2></div>
       <div class="grid2">
         <div class="card stack">
           <h3>Hesap kuralı</h3>
-          <div class="formula">Kredi (m³) = Σ<sub>kritik saatler</sub> [ tahmin edilen çekiş − onaylanan plana göre beklenen çekiş ]<br>otel bazında, net; en az 0</div>
+          <div class="formula">İkame (m³) = alternatif suyla karşılanan içme suyu, gün boyu<br>Kaydırma (m³) = kritik saatlerden çıkarılan şebeke suyu − kritik saatlere eklenen (otel bazında, net; en az 0)</div>
           <ul class="src">
             <li><strong>Kritik saat:</strong> bölgenin tahmini çekişinin bölgesel eşiği aştığı saat. Şu an <span id="i-crit"></span>.</li>
-            <li>Kaydırma ve alternatif suyla ikame kritik saatte aynı ölçüde kredi kazandırır. Suyu başka bir kritik saate kaydırmak kredi kazandırmaz; net hesap bunu düşer.</li>
-            <li>Bu panelde kredi <em>beklenen</em> plandan hesaplanıyor. Pilotta aynı kural, sayaçla ölçülen <em>gerçekleşen</em> çekişe uygulanacak.</li>
+            <li><strong>Çift sayım yok:</strong> Kritik saatte alternatif suyla karşılanan hacim yalnız ikame olarak sayılır, kaydırmaya girmez. Kaydırma şebekeden çekilen toplam suyu değiştirmez, yalnız saatini değiştirir.</li>
+            <li><strong>Tek puan yok:</strong> İki ölçüyü birleştiren bir katsayı belirlenmedi. Ağırlıklar pilotta ASAT ile birlikte değerlendirilecek.</li>
+            <li>Bu panelde iki ölçü de <em>beklenen</em> plandan hesaplanıyor. Pilotta aynı kural, sayaçla ölçülen <em>gerçekleşen</em> çekişe uygulanacak.</li>
           </ul>
           <div class="callout neutral"><strong>Gerçek ödeme veya tarife uygulanmıyor — pilotta ASAT ile tasarlanacak.</strong> Seçenekler: zaman bazlı tarife indirimi ya da öncelikli hizmet.</div>
         </div>
         <div class="card stack">
-          <div class="metric"><span class="v" id="i-total"></span><span class="l">bölgeye toplam katkı: kritik saatlerde düşürülen m³ (onaylanan plan)</span></div>
-          <div class="metric"><span class="v" id="i-share"></span><span class="l">kritik saatlerdeki bölgesel çekişe oranı</span></div>
+          <div class="metric"><span class="v" id="i-subst"></span><span class="l">ikame edilen içme suyu (onaylanan plan, beklenen)</span></div>
+          <div class="metric"><span class="v" id="i-shift"></span><span class="l">kritik saatten kaydırılan şebeke çekişi (onaylanan plan, beklenen)</span></div>
           <p class="foot" id="i-note"></p>
         </div>
       </div>
       <div class="card stack">
-        <h3>Otel bazında kredi</h3>
+        <h3>Otel bazında beklenen etki</h3>
         <div class="tablewrap"><table id="tcredit"></table></div>
-        <p class="foot">Kararlar Bölge ve Otel görünümleriyle ortaktır: bir öneriyi herhangi bir görünümde onaylamak, buradaki krediyi de değiştirir. Pilotta yer almayan oteller kredi almaz.</p>
+        <p class="foot">Kararlar Bölge ve Otel görünümleriyle ortaktır: bir öneriyi herhangi bir görünümde onaylamak ya da reddetmek buradaki değerleri de değiştirir. Pilotta yer almayan oteller için hesap yapılmaz.</p>
       </div>
     </section>
   </div>
@@ -294,7 +295,7 @@ tr.total td{font-weight:600;border-top:2px solid var(--line)}
           <li><strong>Gün 7:</strong> Ölçülen parametreler senaryo aralıklarıyla karşılaştırılır. Panel, senaryo yerine ölçülen değerlerle çalışmaya başlar. Hangi senaryoya yakın çıktığı raporlanır.</li>
           <li><strong>2. hafta:</strong> İlk öneriler; Tahmin / Plan / Gerçekleşen günlük olarak karşılaştırılır.</li>
         </ol>
-        <p class="foot"><strong>Doğrulanması gereken varsayım:</strong> ASAT parsel sayaçlarının saatlik okunabildiği henüz doğrulanmadı. Okunamıyorsa ilk hafta otel iç sayaçlarına ya da geçici kaydedicilere dayanır.</p>
+        <p class="foot"><strong>Doğrulanmamış varsayım:</strong> Sayaçların saatlik kayıt tuttuğu ve bu veriye erişilebildiği henüz doğrulanmadı. Pilot öncesinde sayaçların kayıt sıklığı ve veriye erişim imkânı doğrulanacak; yeterli çözünürlük sağlanamazsa ek ölçüm ihtiyacı değerlendirilecek.</p>
       </div>
 
       <div class="card stack">
@@ -614,17 +615,17 @@ const BF = (() => {
     inputs.forEach((x, i) => {
       if (!x.joined) return; const p = plans[i];
       const sc = sum(p.subCool);
-      if (sc > 1e-6) recs.push({ hotel: x.name, hi: i, cat: 'Soğutma kulesi', text: `${spansShort(p.subCool.map((v, h) => v > 1e-6 ? h : -1).filter(h => h >= 0))} arasında soğutma kulesi besleme suyunun ${m3(sc)} m³'ünü geri kazanılmış sudan karşıla.`, delta: p.subCool.map(v => -v) });
+      if (sc > 1e-6) recs.push({ hotel: x.name, hi: i, cat: 'Soğutma kulesi', text: `${spansShort(p.subCool.map((v, h) => v > 1e-6 ? h : -1).filter(h => h >= 0))} arasında soğutma kulesi besleme suyunun ${m3(sc)} m³'ünü geri kazanılmış sudan karşıla.`, delta: p.subCool.map(v => -v), sub: p.subCool.slice(), shift: zeros() });
       const si = sum(p.subIrr), moved = sum(p.irr.map((v, h) => Math.max(0, x.irr[h] - v)));
       if (si > 1e-6 || moved > 1e-6) {
         const parts = [];
         if (moved > 1e-6) parts.push(`${m3(moved)} m³ sulamayı ${spansShort(p.irr.map((v, h) => v < x.irr[h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spansShort(p.irr.map((v, h) => v > x.irr[h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır`);
         if (si > 1e-6) parts.push(`${m3(si)} m³ sulamayı geri kazanılmış sudan karşıla`);
-        recs.push({ hotel: x.name, hi: i, cat: 'Sulama', text: parts.join('; ') + '.', delta: p.irr.map((v, h) => v - x.irr[h] - p.subIrr[h]) });
+        recs.push({ hotel: x.name, hi: i, cat: 'Sulama', text: parts.join('; ') + '.', delta: p.irr.map((v, h) => v - x.irr[h] - p.subIrr[h]), sub: p.subIrr.slice(), shift: p.irr.map((v, h) => v - x.irr[h]) });
       }
       for (const [c, label] of [['lau', 'Çamaşırhane'], ['pool', 'Havuz ters yıkama']]) {
         const mv = sum(p[c].map((v, h) => Math.max(0, x[c][h] - v)));
-        if (mv > 1e-6) recs.push({ hotel: x.name, hi: i, cat: label, text: `${m3(mv)} m³'ü ${spansShort(p[c].map((v, h) => v < x[c][h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spansShort(p[c].map((v, h) => v > x[c][h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır.`, delta: p[c].map((v, h) => v - x[c][h]) });
+        if (mv > 1e-6) recs.push({ hotel: x.name, hi: i, cat: label, text: `${m3(mv)} m³'ü ${spansShort(p[c].map((v, h) => v < x[c][h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spansShort(p[c].map((v, h) => v > x[c][h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır.`, delta: p[c].map((v, h) => v - x[c][h]), sub: zeros(), shift: p[c].map((v, h) => v - x[c][h]) });
       }
     });
     return recs;
@@ -634,17 +635,23 @@ const BF = (() => {
   // A recommendation's effect = drop in network draw summed over the critical hours (m3)
   function critImpact(res, rec) { return -res.critHours.reduce((s, h) => s + rec.delta[h], 0); }
   function topRecs(res, n) { return res.recs.map((r, i) => i).sort((a, b) => critImpact(res, res.recs[b]) - critImpact(res, res.recs[a])).slice(0, n); }
-  // decisions: { recIndex: 'ok' | 'no' }. Flexibility credit = net drop of the hotel's draw in critical hours (never negative).
+  // decisions: { recIndex: 'ok' | 'no' }. Expected effect per hotel, kept as two separate measures (no combined score):
+  //   subst      = drinking water replaced by alternative water (m3, whole day) — the network draw really falls by this
+  //   substCrit  = the part of subst that falls in critical hours
+  //   shiftCrit  = network water moved out of critical hours (m3, net; a substituted m3 is never counted here)
+  // Critical-hour drop of the hotel = substCrit + shiftCrit (before flooring shiftCrit at 0).
   function applyDecisions(res, decisions) {
-    const base = res.k.base.R, plan = base.slice(), credit = {};
+    const base = res.k.base.R, plan = base.slice(), byHotel = {};
+    const crit = a => res.critHours.reduce((s, h) => s + a[h], 0);
     res.recs.forEach((r, i) => {
       if (decisions[i] !== 'ok') return;
       r.delta.forEach((d, h) => plan[h] += d);
-      credit[r.hotel] = (credit[r.hotel] || 0) + critImpact(res, r);
+      const e = byHotel[r.hotel] || (byHotel[r.hotel] = { subst: 0, substCrit: 0, shiftNet: 0 });
+      e.subst += sum(r.sub); e.substCrit += crit(r.sub); e.shiftNet += -crit(r.shift);
     });
-    Object.keys(credit).forEach(n => credit[n] = Math.max(0, credit[n]));
-    const crit0 = res.critHours.reduce((s, h) => s + base[h], 0), crit1 = res.critHours.reduce((s, h) => s + plan[h], 0);
-    return { plan, credit, crit0, crit1, critRed: crit0 > 0 ? 1 - crit1 / crit0 : null, exceed: plan.reduce((s, v) => s + Math.max(0, v - res.thr), 0) };
+    Object.values(byHotel).forEach(e => e.shiftCrit = Math.max(0, e.shiftNet));
+    const crit0 = crit(base), crit1 = crit(plan);
+    return { plan, byHotel, crit0, crit1, critRed: crit0 > 0 ? 1 - crit1 / crit0 : null, exceed: plan.reduce((s, v) => s + Math.max(0, v - res.thr), 0) };
   }
 
   // ---------- Per-hotel view of the same run (no new planning: slices of the regional plan and its recommendations) ----------
@@ -663,15 +670,17 @@ const BF = (() => {
       { item: 'Alternatif su deposu', now: `${m3(x.tank.cap)} m³ kapasite`, rule: `Alt sınır ${m3(x.tank.min)} m³ · pompa en çok ${m3(x.tank.qmax)} m³/saat · yenilenme ${m3(x.tank.refill)} m³/saat`, flex: '—' },
       { item: 'Oda, mutfak, ortak alan, havuz takviyesi', now: 'Tahmin edilen kullanım', rule: 'Değişmez', flex: 'Korunan' },
     ];
-    return { x, joined: x.joined, base, plan, recIdx, constraints, credit: x.joined ? (applyDecisions(res, decisions).credit[x.name] || 0) : 0 };
+    const none = { subst: 0, substCrit: 0, shiftNet: 0, shiftCrit: 0 };
+    return { x, joined: x.joined, base, plan, recIdx, constraints, flex: x.joined ? (applyDecisions(res, decisions).byHotel[x.name] || none) : none };
   }
-  // Credit table for the incentive view: approved credit and the full-plan potential per joined hotel
+  // Incentive table: the two measures per joined hotel, for the approved plan and if every recommendation were approved
   function credits(res, decisions) {
     const all = {}; res.recs.forEach((r, i) => all[i] = 'ok');
-    const now = applyDecisions(res, decisions), full = applyDecisions(res, all);
-    const rows = res.inputs.filter(x => x.joined).map(x => ({ hotel: x.name, type: x.type, credit: now.credit[x.name] || 0, potential: full.credit[x.name] || 0 }));
-    const total = rows.reduce((s, r) => s + r.credit, 0);
-    return { rows, total, crit0: now.crit0, share: now.crit0 > 0 ? total / now.crit0 : 0, potentialTotal: rows.reduce((s, r) => s + r.potential, 0) };
+    const now = applyDecisions(res, decisions), full = applyDecisions(res, all), z = { subst: 0, substCrit: 0, shiftNet: 0, shiftCrit: 0 };
+    const rows = res.inputs.filter(x => x.joined).map(x => ({ hotel: x.name, type: x.type, now: now.byHotel[x.name] || z, full: full.byHotel[x.name] || z }));
+    const tot = (k, w) => rows.reduce((s, r) => s + r[w][k], 0);
+    const T = w => ({ subst: tot('subst', w), substCrit: tot('substCrit', w), shiftNet: tot('shiftNet', w), shiftCrit: tot('shiftCrit', w) });
+    return { rows, total: T('now'), potential: T('full'), crit0: now.crit0, critDrop: now.crit0 - now.crit1, critDropFull: full.crit0 - full.crit1 };
   }
 
   // ---------- One full run ----------
@@ -823,13 +832,13 @@ const BFV = (() => {
     res.recs.forEach((r, i) => $('recs').appendChild(recEl(i)));
     const nOk = Object.values(decisions).filter(v => v === 'ok').length, nNo = Object.values(decisions).filter(v => v === 'no').length;
     $('reccount').textContent = `${res.recs.length} öneri · ${nOk} onaylandı · ${nNo} reddedildi`;
-    const ap = BF.applyDecisions(res, decisions), plan = ap.plan, credit = ap.credit;
+    const ap = BF.applyDecisions(res, decisions), plan = ap.plan, byHotel = ap.byHotel;
     chart($('c3'), [{ v: base, c: 'var(--base)' }, { v: plan, c: 'var(--accent)', dash: true, w: 2.75 }], res.thr, res.critHours);
     $('p-red').textContent = ap.critRed == null ? '—' : pct(ap.critRed);
     $('p-exc').textContent = fmt(ap.exceed, 1);
-    const names = Object.keys(credit);
-    $('tcred').innerHTML = `<tr><th>Otel</th><th class="n">Esneklik kredisi (m³)</th></tr>` +
-      (names.length ? names.map(n => `<tr><td>${n}</td><td class="n">${fmt(credit[n], 1)}</td></tr>`).join('') : `<tr><td colspan="2" class="muted">Önerileri onayladıkça krediler burada görünür.</td></tr>`);
+    const names = Object.keys(byHotel);
+    $('tcred').innerHTML = `<tr><th>Otel</th><th class="n">İkame edilen içme suyu (m³)</th><th class="n">Kritik saatten kaydırılan çekiş (m³)</th></tr>` +
+      (names.length ? names.map(n => `<tr><td>${n}</td><td class="n">${fmt(byHotel[n].subst, 1)}</td><td class="n">${fmt(byHotel[n].shiftCrit, 1)}</td></tr>`).join('') : `<tr><td colspan="3" class="muted">Önerileri onayladıkça beklenen etki burada görünür.</td></tr>`);
     renderHotel();
     renderIncentive();
   }
@@ -844,7 +853,7 @@ const BFV = (() => {
     const v = BF.hotelView(res, state.hotel, decisions), x = v.x, sum = a => a.reduce((s, y) => s + y, 0);
     [...$('hsel').children].forEach(o => { const xi = res.inputs.find(y => y.id === o.value); o.textContent = `${xi.name} · ${xi.type}${xi.joined ? ' · pilotta' : ''}`; });
     if (!v.joined) {
-      $('hbody').innerHTML = `<div class="callout neutral"><strong>Bu otel pilotta yer almıyor.</strong> ${res.sc.name} senaryosunda ${res.inputs.filter(y => y.joined).length} otel katılıyor (${res.inputs.filter(y => y.joined).map(y => y.name).join(', ')}). Katılmayan otellere öneri verilmez ve kredi yazılmaz.</div>`;
+      $('hbody').innerHTML = `<div class="callout neutral"><strong>Bu otel pilotta yer almıyor.</strong> ${res.sc.name} senaryosunda ${res.inputs.filter(y => y.joined).length} otel katılıyor (${res.inputs.filter(y => y.joined).map(y => y.name).join(', ')}). Katılmayan otellere öneri verilmez ve esneklik hesabı yapılmaz.</div>`;
       return;
     }
     const crit0 = res.critHours.reduce((s, h) => s + v.base[h], 0);
@@ -859,7 +868,8 @@ const BFV = (() => {
         <div class="card stack">
           <div class="metric"><span class="v">${fmt(sum(v.base))}</span><span class="l">yarın şebekeden tahmini çekiş (m³)</span></div>
           <div class="metric"><span class="v">${fmt(crit0, 1)}</span><span class="l">bunun kritik saatlere düşen kısmı (m³)</span></div>
-          <div class="metric"><span class="v" style="color:var(--accent)">${fmt(v.credit, 1)}</span><span class="l">esneklik kredisi, onaylanan plana göre (m³)</span></div>
+          <div class="metric"><span class="v" style="color:var(--accent)">${fmt(v.flex.subst, 1)}</span><span class="l">ikame edilen içme suyu, onaylanan plana göre beklenen (m³)</span></div>
+          <div class="metric"><span class="v" style="color:var(--accent)">${fmt(v.flex.shiftCrit, 1)}</span><span class="l">kritik saatten kaydırılan şebeke çekişi, beklenen (m³)</span></div>
         </div>
       </div>
       <div class="card stack">
@@ -879,16 +889,16 @@ const BFV = (() => {
     chart($('c4'), [{ v: v.base, c: 'var(--base)' }, { v: v.plan, c: 'var(--accent)', dash: true, w: 2.75 }], null, res.critHours);
   }
 
-  // ---- incentive view: credit rule and table (BF.credits) ----
+  // ---- incentive view: the two measures and their split of the critical-hour drop (BF.credits) ----
   function renderIncentive() {
-    const c = BF.credits(res, decisions);
+    const c = BF.credits(res, decisions), t = c.total, P = c.potential, sh = v => c.crit0 > 0 ? pct(v / c.crit0) : '—';
     $('i-crit').textContent = res.critHours.length ? `${res.critHours.length} saat (${BF.spans(res.critHours)})` : 'kritik saat yok';
-    $('i-total').textContent = fmt(c.total, 1) + ' m³';
-    $('i-share').textContent = pct(c.share);
-    $('i-note').innerHTML = `Bütün öneriler onaylanırsa: <span class="num">${fmt(c.potentialTotal, 1)}</span> m³ (<span class="num">${pct(c.crit0 > 0 ? c.potentialTotal / c.crit0 : 0)}</span>). Bu oran, Bölge görünümündeki "kritik saatlerde beklenen azalma" ile aynı hesaptır.`;
-    $('tcredit').innerHTML = `<tr><th>Otel</th><th>Tür</th><th class="n">Kredi, onaylanan plan (m³)</th><th class="n">Tüm öneriler onaylanırsa (m³)</th></tr>` +
-      (c.rows.length ? c.rows.map(r => `<tr><td>${r.hotel}</td><td>${r.type}</td><td class="n">${fmt(r.credit, 1)}</td><td class="n">${fmt(r.potential, 1)}</td></tr>`).join('') +
-        `<tr class="total"><td>Toplam</td><td></td><td class="n">${fmt(c.total, 1)}</td><td class="n">${fmt(c.potentialTotal, 1)}</td></tr>` : `<tr><td colspan="4" class="muted">Bu senaryoda pilotta otel yok.</td></tr>`);
+    $('i-subst').textContent = fmt(t.subst, 1) + ' m³';
+    $('i-shift').textContent = fmt(t.shiftCrit, 1) + ' m³';
+    $('i-note').innerHTML = `<strong>Bölgeye beklenen etki:</strong> kritik saatlerdeki çekiş <span class="num">${fmt(c.critDrop, 1)}</span> m³ (<span class="num">${sh(c.critDrop)}</span>) azalıyor = ikamenin kritik saatlere düşen kısmı <span class="num">${fmt(t.substCrit, 1)}</span> + kaydırmanın net etkisi <span class="num">${fmt(t.shiftNet, 1)}</span> m³. Bütün öneriler onaylanırsa: <span class="num">${fmt(c.critDropFull, 1)}</span> m³ (<span class="num">${sh(c.critDropFull)}</span>), Bölge görünümündeki "kritik saatlerde beklenen azalma" ile aynı hesap.`;
+    $('tcredit').innerHTML = `<tr><th>Otel</th><th>Tür</th><th class="n">İkame (m³)</th><th class="n">Kritik saatten kaydırma (m³)</th><th class="n">Tümü onaylanırsa: ikame</th><th class="n">Tümü onaylanırsa: kaydırma</th></tr>` +
+      (c.rows.length ? c.rows.map(r => `<tr><td>${r.hotel}</td><td>${r.type}</td><td class="n">${fmt(r.now.subst, 1)}</td><td class="n">${fmt(r.now.shiftCrit, 1)}</td><td class="n">${fmt(r.full.subst, 1)}</td><td class="n">${fmt(r.full.shiftCrit, 1)}</td></tr>`).join('') +
+        `<tr class="total"><td>Toplam</td><td></td><td class="n">${fmt(t.subst, 1)}</td><td class="n">${fmt(t.shiftCrit, 1)}</td><td class="n">${fmt(P.subst, 1)}</td><td class="n">${fmt(P.shiftCrit, 1)}</td></tr>` : `<tr><td colspan="6" class="muted">Bu senaryoda pilotta otel yok.</td></tr>`);
   }
 
   // ---- tabs: #bolge, #otel, #tesvik, #pilot (deep-linkable for the demo) ----

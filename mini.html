@@ -390,17 +390,17 @@ const BF = (() => {
     inputs.forEach((x, i) => {
       if (!x.joined) return; const p = plans[i];
       const sc = sum(p.subCool);
-      if (sc > 1e-6) recs.push({ hotel: x.name, hi: i, cat: 'Soğutma kulesi', text: `${spansShort(p.subCool.map((v, h) => v > 1e-6 ? h : -1).filter(h => h >= 0))} arasında soğutma kulesi besleme suyunun ${m3(sc)} m³'ünü geri kazanılmış sudan karşıla.`, delta: p.subCool.map(v => -v) });
+      if (sc > 1e-6) recs.push({ hotel: x.name, hi: i, cat: 'Soğutma kulesi', text: `${spansShort(p.subCool.map((v, h) => v > 1e-6 ? h : -1).filter(h => h >= 0))} arasında soğutma kulesi besleme suyunun ${m3(sc)} m³'ünü geri kazanılmış sudan karşıla.`, delta: p.subCool.map(v => -v), sub: p.subCool.slice(), shift: zeros() });
       const si = sum(p.subIrr), moved = sum(p.irr.map((v, h) => Math.max(0, x.irr[h] - v)));
       if (si > 1e-6 || moved > 1e-6) {
         const parts = [];
         if (moved > 1e-6) parts.push(`${m3(moved)} m³ sulamayı ${spansShort(p.irr.map((v, h) => v < x.irr[h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spansShort(p.irr.map((v, h) => v > x.irr[h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır`);
         if (si > 1e-6) parts.push(`${m3(si)} m³ sulamayı geri kazanılmış sudan karşıla`);
-        recs.push({ hotel: x.name, hi: i, cat: 'Sulama', text: parts.join('; ') + '.', delta: p.irr.map((v, h) => v - x.irr[h] - p.subIrr[h]) });
+        recs.push({ hotel: x.name, hi: i, cat: 'Sulama', text: parts.join('; ') + '.', delta: p.irr.map((v, h) => v - x.irr[h] - p.subIrr[h]), sub: p.subIrr.slice(), shift: p.irr.map((v, h) => v - x.irr[h]) });
       }
       for (const [c, label] of [['lau', 'Çamaşırhane'], ['pool', 'Havuz ters yıkama']]) {
         const mv = sum(p[c].map((v, h) => Math.max(0, x[c][h] - v)));
-        if (mv > 1e-6) recs.push({ hotel: x.name, hi: i, cat: label, text: `${m3(mv)} m³'ü ${spansShort(p[c].map((v, h) => v < x[c][h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spansShort(p[c].map((v, h) => v > x[c][h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır.`, delta: p[c].map((v, h) => v - x[c][h]) });
+        if (mv > 1e-6) recs.push({ hotel: x.name, hi: i, cat: label, text: `${m3(mv)} m³'ü ${spansShort(p[c].map((v, h) => v < x[c][h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spansShort(p[c].map((v, h) => v > x[c][h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır.`, delta: p[c].map((v, h) => v - x[c][h]), sub: zeros(), shift: p[c].map((v, h) => v - x[c][h]) });
       }
     });
     return recs;
@@ -410,17 +410,23 @@ const BF = (() => {
   // A recommendation's effect = drop in network draw summed over the critical hours (m3)
   function critImpact(res, rec) { return -res.critHours.reduce((s, h) => s + rec.delta[h], 0); }
   function topRecs(res, n) { return res.recs.map((r, i) => i).sort((a, b) => critImpact(res, res.recs[b]) - critImpact(res, res.recs[a])).slice(0, n); }
-  // decisions: { recIndex: 'ok' | 'no' }. Flexibility credit = net drop of the hotel's draw in critical hours (never negative).
+  // decisions: { recIndex: 'ok' | 'no' }. Expected effect per hotel, kept as two separate measures (no combined score):
+  //   subst      = drinking water replaced by alternative water (m3, whole day) — the network draw really falls by this
+  //   substCrit  = the part of subst that falls in critical hours
+  //   shiftCrit  = network water moved out of critical hours (m3, net; a substituted m3 is never counted here)
+  // Critical-hour drop of the hotel = substCrit + shiftCrit (before flooring shiftCrit at 0).
   function applyDecisions(res, decisions) {
-    const base = res.k.base.R, plan = base.slice(), credit = {};
+    const base = res.k.base.R, plan = base.slice(), byHotel = {};
+    const crit = a => res.critHours.reduce((s, h) => s + a[h], 0);
     res.recs.forEach((r, i) => {
       if (decisions[i] !== 'ok') return;
       r.delta.forEach((d, h) => plan[h] += d);
-      credit[r.hotel] = (credit[r.hotel] || 0) + critImpact(res, r);
+      const e = byHotel[r.hotel] || (byHotel[r.hotel] = { subst: 0, substCrit: 0, shiftNet: 0 });
+      e.subst += sum(r.sub); e.substCrit += crit(r.sub); e.shiftNet += -crit(r.shift);
     });
-    Object.keys(credit).forEach(n => credit[n] = Math.max(0, credit[n]));
-    const crit0 = res.critHours.reduce((s, h) => s + base[h], 0), crit1 = res.critHours.reduce((s, h) => s + plan[h], 0);
-    return { plan, credit, crit0, crit1, critRed: crit0 > 0 ? 1 - crit1 / crit0 : null, exceed: plan.reduce((s, v) => s + Math.max(0, v - res.thr), 0) };
+    Object.values(byHotel).forEach(e => e.shiftCrit = Math.max(0, e.shiftNet));
+    const crit0 = crit(base), crit1 = crit(plan);
+    return { plan, byHotel, crit0, crit1, critRed: crit0 > 0 ? 1 - crit1 / crit0 : null, exceed: plan.reduce((s, v) => s + Math.max(0, v - res.thr), 0) };
   }
 
   // ---------- Per-hotel view of the same run (no new planning: slices of the regional plan and its recommendations) ----------
@@ -439,15 +445,17 @@ const BF = (() => {
       { item: 'Alternatif su deposu', now: `${m3(x.tank.cap)} m³ kapasite`, rule: `Alt sınır ${m3(x.tank.min)} m³ · pompa en çok ${m3(x.tank.qmax)} m³/saat · yenilenme ${m3(x.tank.refill)} m³/saat`, flex: '—' },
       { item: 'Oda, mutfak, ortak alan, havuz takviyesi', now: 'Tahmin edilen kullanım', rule: 'Değişmez', flex: 'Korunan' },
     ];
-    return { x, joined: x.joined, base, plan, recIdx, constraints, credit: x.joined ? (applyDecisions(res, decisions).credit[x.name] || 0) : 0 };
+    const none = { subst: 0, substCrit: 0, shiftNet: 0, shiftCrit: 0 };
+    return { x, joined: x.joined, base, plan, recIdx, constraints, flex: x.joined ? (applyDecisions(res, decisions).byHotel[x.name] || none) : none };
   }
-  // Credit table for the incentive view: approved credit and the full-plan potential per joined hotel
+  // Incentive table: the two measures per joined hotel, for the approved plan and if every recommendation were approved
   function credits(res, decisions) {
     const all = {}; res.recs.forEach((r, i) => all[i] = 'ok');
-    const now = applyDecisions(res, decisions), full = applyDecisions(res, all);
-    const rows = res.inputs.filter(x => x.joined).map(x => ({ hotel: x.name, type: x.type, credit: now.credit[x.name] || 0, potential: full.credit[x.name] || 0 }));
-    const total = rows.reduce((s, r) => s + r.credit, 0);
-    return { rows, total, crit0: now.crit0, share: now.crit0 > 0 ? total / now.crit0 : 0, potentialTotal: rows.reduce((s, r) => s + r.potential, 0) };
+    const now = applyDecisions(res, decisions), full = applyDecisions(res, all), z = { subst: 0, substCrit: 0, shiftNet: 0, shiftCrit: 0 };
+    const rows = res.inputs.filter(x => x.joined).map(x => ({ hotel: x.name, type: x.type, now: now.byHotel[x.name] || z, full: full.byHotel[x.name] || z }));
+    const tot = (k, w) => rows.reduce((s, r) => s + r[w][k], 0);
+    const T = w => ({ subst: tot('subst', w), substCrit: tot('substCrit', w), shiftNet: tot('shiftNet', w), shiftCrit: tot('shiftCrit', w) });
+    return { rows, total: T('now'), potential: T('full'), crit0: now.crit0, critDrop: now.crit0 - now.crit1, critDropFull: full.crit0 - full.crit1 };
   }
 
   // ---------- One full run ----------
