@@ -13,15 +13,15 @@
 /* Layout: a single working column — controls, then the three questions the panel answers (forecast → strategies → plan), then assumptions. */
 :root{
   --bg:#f4f7f8; --surface:#ffffff; --ink:#10242b; --muted:#5b6f76; --line:#d7e1e4; --soft:#e9f0f2;
-  --accent:#0b7a8a; --accent-soft:#d8eef1; --ind:#c27a12; --base:#7d8f95; --crit:#c2412d; --crit-soft:#f8e3df; --good:#2f7d4f; --good-soft:#e1f1e7;
+  --accent:#0b7a8a; --accent-soft:#d8eef1; --ind:#c27a12; --base:#7d8f95; --crit:#c2412d; --crit-soft:#f8e3df; --good:#2f7d4f; --good-soft:#e1f1e7; --design:#6b4fa0; --design-soft:#efe9f8;
   --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
 }
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0d171a; --surface:#132328; --ink:#e3eef0; --muted:#97adb3; --line:#27404a; --soft:#18303a;
-  --accent:#3fb6c6; --accent-soft:#163b42; --ind:#e3a446; --base:#8aa0a6; --crit:#ef7b67; --crit-soft:#3b211d; --good:#6cc28d; --good-soft:#18352a; color-scheme:dark}}
+  --accent:#3fb6c6; --accent-soft:#163b42; --ind:#e3a446; --base:#8aa0a6; --crit:#ef7b67; --crit-soft:#3b211d; --good:#6cc28d; --good-soft:#18352a; --design:#b49ae6; --design-soft:#2a2240; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#0d171a; --surface:#132328; --ink:#e3eef0; --muted:#97adb3; --line:#27404a; --soft:#18303a;
-  --accent:#3fb6c6; --accent-soft:#163b42; --ind:#e3a446; --base:#8aa0a6; --crit:#ef7b67; --crit-soft:#3b211d; --good:#6cc28d; --good-soft:#18352a; color-scheme:dark}
+  --accent:#3fb6c6; --accent-soft:#163b42; --ind:#e3a446; --base:#8aa0a6; --crit:#ef7b67; --crit-soft:#3b211d; --good:#6cc28d; --good-soft:#18352a; --design:#b49ae6; --design-soft:#2a2240; color-scheme:dark}
 body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5}
 .wrap{max-width:1080px;margin:0 auto;padding-block:28px 64px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:28px}
 h1{font-size:30px;line-height:1.15;margin:0;letter-spacing:-.01em;text-wrap:balance}
@@ -59,7 +59,7 @@ section{display:grid;gap:14px}
 .metric{display:grid;gap:2px}
 .metric .v{font-family:var(--mono);font-size:24px;font-weight:500;font-variant-numeric:tabular-nums}
 .metric .l{font-size:13px;color:var(--muted)}
-.stack{display:grid;gap:14px}
+.stack{display:grid;gap:14px;align-content:start}
 .tablewrap{overflow-x:auto}
 table{border-collapse:collapse;width:100%;font-size:14px}
 th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
@@ -89,22 +89,50 @@ ul.src{margin:8px 0 0;padding-left:18px;font-size:14px;display:grid;gap:4px}
 a{color:var(--accent)}
 .foot{font-size:13px;color:var(--muted)}
 @media (prefers-reduced-motion:no-preference){.chart path.ln{transition:d .25s ease}}
+/* Views: tabs on top (stacked on phones); working views vs design screens are visually separated */
+.tabs{display:flex;flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--line)}
+.tabs button{font:inherit;font-size:14px;font-weight:600;color:var(--muted);background:none;border:1px solid transparent;border-bottom:0;border-radius:10px 10px 0 0;padding:10px 14px;margin-bottom:-1px;cursor:pointer;display:flex;align-items:center;gap:8px}
+.tabs button[aria-selected="true"]{color:var(--ink);background:var(--surface);border-color:var(--line)}
+.tabs button:focus-visible,select:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media (max-width:640px){.tabs{flex-direction:column;border-bottom:0}.tabs button{border:1px solid var(--line);border-radius:8px;margin:0;justify-content:space-between}.tabs button[aria-selected="true"]{border-color:var(--accent);background:var(--accent-soft)}}
+.tag{font-size:11px;font-weight:600;padding:1px 7px;border-radius:999px;white-space:nowrap;letter-spacing:.02em}
+.tag.run{background:var(--good-soft);color:var(--good)}
+.tag.design{background:var(--design-soft);color:var(--design)}
+.view{display:grid;gap:28px}
+.view[hidden],.controls[hidden]{display:none}
+.vbar{display:flex;flex-wrap:wrap;gap:8px 12px;align-items:center;font-size:13px;color:var(--muted)}
+.design-zone{border:2px dashed var(--design);border-radius:14px;padding:16px;display:grid;gap:16px;background:repeating-linear-gradient(135deg,transparent 0 14px,var(--design-soft) 14px 15px)}
+.design-zone .card{border-color:var(--design-soft)}
+.design-zone h2,.design-zone h3{color:var(--design)}
+select{font:inherit;font-size:14px;padding:7px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink);max-width:100%}
+.formula{font-family:var(--mono);font-size:14px;background:var(--soft);border-radius:8px;padding:12px 14px;overflow-x:auto}
+.steps{margin:0;padding-left:20px;display:grid;gap:8px;font-size:14px}
+tr.total td{font-weight:600;border-top:2px solid var(--line)}
 </style>
 
 <div class="wrap">
   <header>
-    <div class="eyebrow">ClimaThon · Prototip · Simülasyon</div>
+    <div class="eyebrow">ClimaThon · Prototip · Simülasyon · <a href="mini.html">Mini prototip (çekirdek döngü)</a></div>
     <h1>BlueFlex Belek</h1>
     <p class="muted">Aynı şebekeye bağlı otellerin su kullanımını yarın için birlikte planlayan karar destek paneli: önce doğru kaynak, sonra doğru zaman.</p>
     <div class="banner"><span class="pill syn">Sentetik veri</span><span>Bu panel kaynaklara dayalı parametrelerle üretilmiş sentetik bir Belek bölgesinde çalışır (7 otel, sezon zirvesinde bir gün). Sistemin nasıl karar verdiğini ve hangi koşullarda fayda sağlayabileceğini gösterir; Belek'te gerçek tasarruf sağlayacağını kanıtlamaz. Sıcaklık verisi de sentetiktir.</span></div>
   </header>
 
-  <div class="controls" role="group" aria-label="Senaryo ve eşik">
+  <nav class="tabs" role="tablist" aria-label="Görünümler">
+    <button type="button" role="tab" id="tab-bolge" aria-controls="v-bolge" data-v="bolge">Bölge / ASAT <span class="tag run">Çalışan</span></button>
+    <button type="button" role="tab" id="tab-otel" aria-controls="v-otel" data-v="otel">Otel <span class="tag run">Çalışan</span></button>
+    <button type="button" role="tab" id="tab-tesvik" aria-controls="v-tesvik" data-v="tesvik">Teşvik <span class="tag run">Çalışan · ödeme yok</span></button>
+    <button type="button" role="tab" id="tab-pilot" aria-controls="v-pilot" data-v="pilot">Pilot planı <span class="tag design">Tasarım</span></button>
+  </nav>
+
+  <div class="controls" id="controls" role="group" aria-label="Senaryo ve eşik">
     <div class="ctl"><label id="sclabel">Senaryo</label><div class="seg" id="scseg" role="group" aria-labelledby="sclabel"></div></div>
     <div class="ctl"><label for="thr">Bölgesel eşik: <span id="thrv" class="num"></span> (mevcut tahmini pikin yüzdesi)</label><input id="thr" type="range" min="60" max="100" step="5" value="85"></div>
     <p class="scdesc" id="scdesc"></p>
   </div>
 
+  <div class="view" id="v-bolge" role="tabpanel" aria-labelledby="tab-bolge">
+  <p class="vbar"><span class="tag run">Çalışan · simülasyon</span>Su idaresinin (ASAT) bölge görünümü: yarının bölgesel tahmini, adil karşılaştırma ve ortak plan.</p>
   <section aria-labelledby="s1">
     <div><div class="eyebrow">1 · Tahmin</div><h2 id="s1">Yarın hangi saatler kritik?</h2></div>
     <div class="grid2">
@@ -134,18 +162,21 @@ a{color:var(--accent)}
 
   <section aria-labelledby="s3">
     <div><div class="eyebrow">3 · Plan</div><h2 id="s3">Öneriler ve onaylanan plana göre beklenen çekiş</h2></div>
+    <div class="card stack">
+      <svg class="chart" id="c3" viewBox="0 0 720 300" role="img" aria-label="Mevcut işletme ve onaylanan plana göre beklenen bölgesel çekiş"></svg>
+      <div class="legend"><span><i style="border-color:var(--base)"></i>Mevcut, tahmin</span><span><i class="dash" style="border-color:var(--accent)"></i>Plan: onaylanan önerilere göre beklenen</span><span><i class="dash" style="border-color:var(--crit)"></i>Eşik</span><span><i class="band"></i>Kritik saat</span></div>
+      <div class="kpis">
+        <div class="metric"><span class="v" id="p-red"></span><span class="l">kritik saatlerde beklenen azalma</span></div>
+        <div class="metric"><span class="v" id="p-exc"></span><span class="l">kalan eşik aşımı (m³)</span></div>
+      </div>
+    </div>
     <div class="grid2">
       <div class="stack">
         <div class="row"><button class="btn primary" id="allok">Tümünü onayla</button><button class="btn" id="reset">Kararları sıfırla</button><span class="muted" id="reccount"></span></div>
         <div class="recs" id="recs"></div>
       </div>
       <div class="card stack">
-        <svg class="chart" id="c3" viewBox="0 0 720 300" role="img" aria-label="Mevcut işletme ve onaylanan plana göre beklenen bölgesel çekiş"></svg>
-        <div class="legend"><span><i style="border-color:var(--base)"></i>Mevcut, tahmin</span><span><i class="dash" style="border-color:var(--accent)"></i>Plan: onaylanan önerilere göre beklenen</span></div>
-        <div class="kpis">
-          <div class="metric"><span class="v" id="p-red"></span><span class="l">kritik saatlerde beklenen azalma</span></div>
-          <div class="metric"><span class="v" id="p-exc"></span><span class="l">kalan eşik aşımı (m³)</span></div>
-        </div>
+        <h3>Esneklik kredisi</h3>
         <div class="tablewrap"><table id="tcred"></table></div>
         <p class="foot"><strong>Tahmin</strong>: model çıktısı. <strong>Plan</strong>: onaylanan önerilere göre beklenen. <strong>Gerçekleşen</strong>: yalnız pilotta, uygulama sonrası sayaç ölçümüyle hesaplanır; bu panelde gösterilmez. Esneklik kredisi: otelin kritik saatlerdeki şebeke çekişinden düşürülen m³ (kaydırma ya da alternatif suyla ikame yoluyla), teşvik mekanizmasının önerilen ölçüsü.</p>
       </div>
@@ -189,6 +220,98 @@ a{color:var(--accent)}
       </details>
     </div>
   </section>
+  </div>
+
+  <div class="view" id="v-otel" role="tabpanel" aria-labelledby="tab-otel" hidden>
+    <p class="vbar"><span class="tag run">Çalışan · simülasyon</span>Otelin görünümü: aynı plan, aynı öneriler ve aynı kararlar; yalnız bu otele düşen kısmı.</p>
+    <section aria-labelledby="h-otel">
+      <div class="row" style="justify-content:space-between">
+        <div><div class="eyebrow">Otel görünümü</div><h2 id="h-otel">Yarın bu otelden ne isteniyor?</h2></div>
+        <div class="ctl"><label for="hsel">Otel</label><select id="hsel"></select></div>
+      </div>
+      <div id="hbody" class="stack"></div>
+    </section>
+  </div>
+
+  <div class="view" id="v-tesvik" role="tabpanel" aria-labelledby="tab-tesvik" hidden>
+    <p class="vbar"><span class="tag run">Çalışan · simülasyon</span>Kredi, onaylanan plandan hesaplanıyor. Ödeme ve tarife kısmı tasarım aşamasında.</p>
+    <section aria-labelledby="h-tesvik">
+      <div><div class="eyebrow">Teşvik görünümü</div><h2 id="h-tesvik">Esneklik kredisi: kritik saatte düşürülen her m³</h2></div>
+      <div class="grid2">
+        <div class="card stack">
+          <h3>Hesap kuralı</h3>
+          <div class="formula">Kredi (m³) = Σ<sub>kritik saatler</sub> [ tahmin edilen çekiş − onaylanan plana göre beklenen çekiş ]<br>otel bazında, net; en az 0</div>
+          <ul class="src">
+            <li><strong>Kritik saat:</strong> bölgenin tahmini çekişinin bölgesel eşiği aştığı saat. Şu an <span id="i-crit"></span>.</li>
+            <li>Kaydırma ve alternatif suyla ikame kritik saatte aynı ölçüde kredi kazandırır. Suyu başka bir kritik saate kaydırmak kredi kazandırmaz; net hesap bunu düşer.</li>
+            <li>Bu panelde kredi <em>beklenen</em> plandan hesaplanıyor. Pilotta aynı kural, sayaçla ölçülen <em>gerçekleşen</em> çekişe uygulanacak.</li>
+          </ul>
+          <div class="callout neutral"><strong>Gerçek ödeme veya tarife uygulanmıyor — pilotta ASAT ile tasarlanacak.</strong> Seçenekler: zaman bazlı tarife indirimi ya da öncelikli hizmet.</div>
+        </div>
+        <div class="card stack">
+          <div class="metric"><span class="v" id="i-total"></span><span class="l">bölgeye toplam katkı: kritik saatlerde düşürülen m³ (onaylanan plan)</span></div>
+          <div class="metric"><span class="v" id="i-share"></span><span class="l">kritik saatlerdeki bölgesel çekişe oranı</span></div>
+          <p class="foot" id="i-note"></p>
+        </div>
+      </div>
+      <div class="card stack">
+        <h3>Otel bazında kredi</h3>
+        <div class="tablewrap"><table id="tcredit"></table></div>
+        <p class="foot">Kararlar Bölge ve Otel görünümleriyle ortaktır: bir öneriyi herhangi bir görünümde onaylamak, buradaki krediyi de değiştirir. Pilotta yer almayan oteller kredi almaz.</p>
+      </div>
+    </section>
+  </div>
+
+  <div class="view" id="v-pilot" role="tabpanel" aria-labelledby="tab-pilot" hidden>
+    <p class="vbar"><span class="tag design">Tasarım · çalışan bir özellik değil</span>Bu ekran pilotun nasıl yürütüleceğini anlatan bir vizyon taslağıdır. İçinde ölçülmüş ya da simüle edilmiş "gerçekleşen" bir rakam yoktur.</p>
+    <div class="design-zone">
+      <div><div class="eyebrow">Pilot planı · Tasarım</div><h2>Tahminden ölçüme: pilot nasıl yürür?</h2></div>
+
+      <div class="card stack">
+        <h3>Üç ayrı sayı, üç ayrı kaynak</h3>
+        <div class="tablewrap"><table>
+          <tr><th>Etiket</th><th>Ne?</th><th>Kaynak</th><th>Ne zaman?</th><th>Bu prototipte</th></tr>
+          <tr><td><strong>Tahmin</strong></td><td>Yarının saatlik çekişi, mevcut işletmeyle</td><td>Makine öğrenmesi modeli + otelin işletme planı</td><td>Her gün 00:00</td><td>Var (sentetik veri, simülasyon içi)</td></tr>
+          <tr><td><strong>Plan</strong></td><td>Onaylanan önerilere göre beklenen çekiş</td><td>Planlayıcı + otelin onayı</td><td>Gün başlamadan</td><td>Var (beklenen değer)</td></tr>
+          <tr><td><strong>Gerçekleşen</strong></td><td>Uygulama sonrası ölçülen çekiş</td><td>ASAT parsel sayaçları + otel iç sayaçları</td><td>Gün bittikten sonra</td><td><strong>Yok.</strong> Yalnız pilotta ölçülür.</td></tr>
+        </table></div>
+        <p class="foot">Etki, pilotta "plan olmasaydı" tahmini (karşı olgusal baseline) ile gerçekleşen arasındaki fark olarak raporlanacak. Tahmin hatası da aynı raporda ayrıca gösterilecek; etki ile model hatası birbirinden ayrılmadan hiçbir sonuç ilan edilmeyecek.</p>
+      </div>
+
+      <div class="card stack">
+        <h3>İlk hafta: S1–S4'ten hangisi geçerli?</h3>
+        <p class="muted" style="font-size:14px">İlk hafta öneri verilmez. Mevcut işletme ölçülür ve dört senaryonun belirsiz parametreleri gerçek değerlerle değiştirilir.</p>
+        <div class="tablewrap"><table>
+          <tr><th>Belirsiz parametre</th><th>Senaryolardaki aralık</th><th>Nasıl ölçülür?</th></tr>
+          <tr><td>Sulamada şebeke payı</td><td>%20 (S3) – %90 (S1)</td><td>Otelin sulama hattı iç sayacı ile ASAT parsel sayacı karşılaştırılır; kuyu kullanımı otel kayıtlarından alınır.</td></tr>
+          <tr><td>Gündüz sulama payı</td><td>%10 (S4) – %70 (S1)</td><td>Sulama hattı sayacının ya da sulama kontrol sisteminin saatlik kayıtları.</td></tr>
+          <tr><td>Katılım</td><td>%40 – %60</td><td>Pilot protokolünü imzalayan otel sayısı.</td></tr>
+          <tr><td>Alternatif su kapasitesi</td><td>İkame edilebilir hacmin %20 – %30'u</td><td>Otelin geri kazanım/arıtma tesisinin debisi, depo hacmi ve alt sınırı (otel teknik ekibi).</td></tr>
+        </table></div>
+        <ol class="steps">
+          <li><strong>Gün 1–2:</strong> Sayaç erişimi ve veri kalitesi kontrolü (eksik saat, sayaç uyumu).</li>
+          <li><strong>Gün 3–6:</strong> Mevcut işletmenin ölçümü; öneri yok. Model bu veriyle yeniden eğitilir.</li>
+          <li><strong>Gün 7:</strong> Ölçülen parametreler senaryo aralıklarıyla karşılaştırılır. Panel, senaryo yerine ölçülen değerlerle çalışmaya başlar. Hangi senaryoya yakın çıktığı raporlanır.</li>
+          <li><strong>2. hafta:</strong> İlk öneriler; Tahmin / Plan / Gerçekleşen günlük olarak karşılaştırılır.</li>
+        </ol>
+        <p class="foot"><strong>Doğrulanması gereken varsayım:</strong> ASAT parsel sayaçlarının saatlik okunabildiği henüz doğrulanmadı. Okunamıyorsa ilk hafta otel iç sayaçlarına ya da geçici kaydedicilere dayanır.</p>
+      </div>
+
+      <div class="card stack">
+        <h3>ASAT ile veri paylaşım protokolü (taslak)</h3>
+        <div class="tablewrap"><table>
+          <tr><th>Konu</th><th>Öneri</th></tr>
+          <tr><td>ASAT'tan</td><td>Bölgenin saatlik debisi ve depo seviyeleri (SCADA), katılan otellerin parsel sayaç okumaları</td></tr>
+          <tr><td>Otellerden</td><td>Sulama, soğutma kulesi ve çamaşırhane iç sayaçları; alternatif su deposu seviyesi; ertesi günün doluluk planı</td></tr>
+          <tr><td>Sıklık</td><td>Saatlik değerler, günde bir toplu aktarım (gerçek zamanlı bağlantı pilotta gerekmez)</td></tr>
+          <tr><td>Gizlilik</td><td>Otelin verisi diğer otellere gösterilmez; oteller yalnız bölgesel kritik saat sinyalini görür. ASAT otel bazlı veriyi yalnız pilot amacıyla kullanır.</td></tr>
+          <tr><td>Karar yetkisi</td><td>Öneriler bağlayıcı değildir; uygulama kararı otelindir. ASAT bölgesel eşiği belirler.</td></tr>
+          <tr><td>Süre ve saklama</td><td>Pilot süresince; pilot sonunda ham veri silinir, toplu sonuç raporu paylaşılır</td></tr>
+        </table></div>
+      </div>
+    </div>
+  </div>
+
   <p class="foot">BlueFlex Belek · ClimaThon prototipi · Nida Nur Batal</p>
 </div>
 
@@ -232,12 +355,9 @@ const BF = (() => {
     S3: { name: 'S3 Kuyu ağırlıklı', net: 0.2, day: 0.5, p: 0.4, sub: 0.2 },
     S4: { name: 'S4 Gece sulama yaygın', net: 0.5, day: 0.1, p: 0.4, sub: 0.2 },
   };
-  // Operating windows
-  const WIN = {
-    irr: new Set(range(21, 9)),      // shifted irrigation only 21:00-09:00
-    lau: new Set(range(6, 22)),      // laundry must run 06:00-22:00
-    pool: new Set(range(22, 6)),     // backwash at night 22:00-06:00
-  };
+  // Operating windows [start, end) — shifted irrigation 21:00-09:00, laundry 06:00-22:00, backwash at night 22:00-06:00
+  const WIN_DEF = { irr: [21, 9], lau: [6, 22], pool: [22, 6] };
+  const WIN = Object.fromEntries(Object.entries(WIN_DEF).map(([k, [a, b]]) => [k, new Set(range(a, b))]));
 
   // ---------- 1. Data: hotels' fixed parameters ----------
   function buildHotels() {
@@ -481,27 +601,77 @@ const BF = (() => {
 
   // ---------- Recommendations from the regional plan (each one an additive delta on network draw) ----------
   function fmtH(h) { return String(h).padStart(2, '0') + ':00'; }
-  function spans(hours) { if (!hours.length) return ''; const hs = [...hours].sort((a, b) => a - b); const out = []; let s = hs[0], e = hs[0]; for (let k = 1; k <= hs.length; k++) { if (k < hs.length && hs[k] === e + 1) { e = hs[k]; continue; } out.push(`${fmtH(s)}–${fmtH((e + 1) % 24)}`); if (k < hs.length) { s = e = hs[k]; } } return out.join(', '); }
+  function spanList(hours) { if (!hours.length) return []; const hs = [...hours].sort((a, b) => a - b); const out = []; let s = hs[0], e = hs[0]; for (let k = 1; k <= hs.length; k++) { if (k < hs.length && hs[k] === e + 1) { e = hs[k]; continue; } out.push([s, e]); if (k < hs.length) { s = e = hs[k]; } }
+    if (out.length > 1 && out[0][0] === 0 && out[out.length - 1][1] === H - 1) { const last = out.pop(); out[0] = [last[0], out[0][1]]; out.push(out.shift()); }   // join ranges across midnight
+    return out; }
+  const spanText = ([s, e]) => `${fmtH(s)}–${fmtH((e + 1) % 24)}`;
+  function spans(hours) { return spanList(hours).map(spanText).join(', '); }
+  // Up to 3 ranges are listed; beyond that the first 2 are shown and the rest summarised as "+N saat"
+  function spansShort(hours) { const l = spanList(hours); if (l.length <= 3) return l.map(spanText).join(', '); const rest = l.slice(2).reduce((s, [a, b]) => s + (b - a + H) % H + 1, 0); return l.slice(0, 2).map(spanText).join(', ') + ` ve +${rest} saat`; }
   const m3 = v => v < 10 ? v.toFixed(1).replace('.', ',') : v.toFixed(0);
   function recommendations(inputs, plans) {
     const recs = [];
     inputs.forEach((x, i) => {
       if (!x.joined) return; const p = plans[i];
       const sc = sum(p.subCool);
-      if (sc > 1e-6) recs.push({ hotel: x.name, hi: i, cat: 'Soğutma kulesi', text: `${spans(p.subCool.map((v, h) => v > 1e-6 ? h : -1).filter(h => h >= 0))} arasında soğutma kulesi besleme suyunun ${m3(sc)} m³'ünü geri kazanılmış sudan karşıla.`, delta: p.subCool.map(v => -v) });
+      if (sc > 1e-6) recs.push({ hotel: x.name, hi: i, cat: 'Soğutma kulesi', text: `${spansShort(p.subCool.map((v, h) => v > 1e-6 ? h : -1).filter(h => h >= 0))} arasında soğutma kulesi besleme suyunun ${m3(sc)} m³'ünü geri kazanılmış sudan karşıla.`, delta: p.subCool.map(v => -v) });
       const si = sum(p.subIrr), moved = sum(p.irr.map((v, h) => Math.max(0, x.irr[h] - v)));
       if (si > 1e-6 || moved > 1e-6) {
         const parts = [];
-        if (moved > 1e-6) parts.push(`${m3(moved)} m³ sulamayı ${spans(p.irr.map((v, h) => v < x.irr[h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spans(p.irr.map((v, h) => v > x.irr[h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır`);
+        if (moved > 1e-6) parts.push(`${m3(moved)} m³ sulamayı ${spansShort(p.irr.map((v, h) => v < x.irr[h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spansShort(p.irr.map((v, h) => v > x.irr[h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır`);
         if (si > 1e-6) parts.push(`${m3(si)} m³ sulamayı geri kazanılmış sudan karşıla`);
         recs.push({ hotel: x.name, hi: i, cat: 'Sulama', text: parts.join('; ') + '.', delta: p.irr.map((v, h) => v - x.irr[h] - p.subIrr[h]) });
       }
       for (const [c, label] of [['lau', 'Çamaşırhane'], ['pool', 'Havuz ters yıkama']]) {
         const mv = sum(p[c].map((v, h) => Math.max(0, x[c][h] - v)));
-        if (mv > 1e-6) recs.push({ hotel: x.name, hi: i, cat: label, text: `${m3(mv)} m³'ü ${spans(p[c].map((v, h) => v < x[c][h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spans(p[c].map((v, h) => v > x[c][h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır.`, delta: p[c].map((v, h) => v - x[c][h]) });
+        if (mv > 1e-6) recs.push({ hotel: x.name, hi: i, cat: label, text: `${m3(mv)} m³'ü ${spansShort(p[c].map((v, h) => v < x[c][h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spansShort(p[c].map((v, h) => v > x[c][h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır.`, delta: p[c].map((v, h) => v - x[c][h]) });
       }
     });
     return recs;
+  }
+
+  // ---------- Operator decisions → expected draw (shared by every page, so all views show the same numbers) ----------
+  // A recommendation's effect = drop in network draw summed over the critical hours (m3)
+  function critImpact(res, rec) { return -res.critHours.reduce((s, h) => s + rec.delta[h], 0); }
+  function topRecs(res, n) { return res.recs.map((r, i) => i).sort((a, b) => critImpact(res, res.recs[b]) - critImpact(res, res.recs[a])).slice(0, n); }
+  // decisions: { recIndex: 'ok' | 'no' }. Flexibility credit = net drop of the hotel's draw in critical hours (never negative).
+  function applyDecisions(res, decisions) {
+    const base = res.k.base.R, plan = base.slice(), credit = {};
+    res.recs.forEach((r, i) => {
+      if (decisions[i] !== 'ok') return;
+      r.delta.forEach((d, h) => plan[h] += d);
+      credit[r.hotel] = (credit[r.hotel] || 0) + critImpact(res, r);
+    });
+    Object.keys(credit).forEach(n => credit[n] = Math.max(0, credit[n]));
+    const crit0 = res.critHours.reduce((s, h) => s + base[h], 0), crit1 = res.critHours.reduce((s, h) => s + plan[h], 0);
+    return { plan, credit, crit0, crit1, critRed: crit0 > 0 ? 1 - crit1 / crit0 : null, exceed: plan.reduce((s, v) => s + Math.max(0, v - res.thr), 0) };
+  }
+
+  // ---------- Per-hotel view of the same run (no new planning: slices of the regional plan and its recommendations) ----------
+  function hotelView(res, id, decisions) {
+    const i = res.inputs.findIndex(x => x.id === id), x = res.inputs[i];
+    const base = netOf(x, emptyPlan(x)), plan = base.slice();
+    const recIdx = res.recs.map((r, k) => k).filter(k => res.recs[k].hi === i);
+    recIdx.forEach(k => { if (decisions[k] === 'ok') res.recs[k].delta.forEach((d, h) => plan[h] += d); });
+    const hrs = a => a.map((v, h) => v > 1e-6 ? h : -1).filter(h => h >= 0);
+    const win = k => `${fmtH(WIN_DEF[k][0])}–${fmtH(WIN_DEF[k][1])}`;
+    const constraints = [
+      { item: 'Sulama', now: spans(hrs(x.irr)), rule: `Kaydırılırsa yalnız ${win('irr')} arasına; günlük hacim tamamlanır`, flex: 'İkame + kaydırma' },
+      { item: 'Çamaşırhane', now: spans(hrs(x.lau)), rule: `${win('lau')} arasında tamamlanır`, flex: 'Kaydırma' },
+      { item: 'Havuz ters yıkama', now: spans(hrs(x.pool)), rule: `${win('pool')} arasında`, flex: 'Kaydırma' },
+      { item: 'Soğutma kulesi', now: 'Sıcaklığa bağlı, gün boyu', rule: 'Zamanı kaydırılamaz', flex: 'Yalnız ikame' },
+      { item: 'Alternatif su deposu', now: `${m3(x.tank.cap)} m³ kapasite`, rule: `Alt sınır ${m3(x.tank.min)} m³ · pompa en çok ${m3(x.tank.qmax)} m³/saat · yenilenme ${m3(x.tank.refill)} m³/saat`, flex: '—' },
+      { item: 'Oda, mutfak, ortak alan, havuz takviyesi', now: 'Tahmin edilen kullanım', rule: 'Değişmez', flex: 'Korunan' },
+    ];
+    return { x, joined: x.joined, base, plan, recIdx, constraints, credit: x.joined ? (applyDecisions(res, decisions).credit[x.name] || 0) : 0 };
+  }
+  // Credit table for the incentive view: approved credit and the full-plan potential per joined hotel
+  function credits(res, decisions) {
+    const all = {}; res.recs.forEach((r, i) => all[i] = 'ok');
+    const now = applyDecisions(res, decisions), full = applyDecisions(res, all);
+    const rows = res.inputs.filter(x => x.joined).map(x => ({ hotel: x.name, type: x.type, credit: now.credit[x.name] || 0, potential: full.credit[x.name] || 0 }));
+    const total = rows.reduce((s, r) => s + r.credit, 0);
+    return { rows, total, crit0: now.crit0, share: now.crit0 > 0 ? total / now.crit0 : 0, potentialTotal: rows.reduce((s, r) => s + r.potential, 0) };
   }
 
   // ---------- One full run ----------
@@ -527,24 +697,59 @@ const BF = (() => {
       recs: recommendations(inputs, pReg),
     };
   }
-  return { run, SCENARIOS, H, spans, fmtH };
+  const DEFAULT = { sc: 'S2', thr: 0.85 };   // the setting both pages open with (main panel default = mini page)
+  return { run, SCENARIOS, DEFAULT, H, spans, spansShort, fmtH, critImpact, topRecs, applyDecisions, hotelView, credits };
 })();
 if (typeof module !== 'undefined') module.exports = BF;
 
 </script>
 <script>
-(() => {
-  const $ = id => document.getElementById(id);
+/* BlueFlex Belek — shared view helpers (formatting and the hourly chart). Embedded at the VIEW marker by build.js. */
+const BFV = (() => {
   const fmt = (v, d = 0) => v.toLocaleString('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d });
   const pct = v => '%' + fmt(v * 100, 1);
+  function niceStep(x) { const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
+  // series: [{ v: number[24], c: color, w?, dash?, peak? }], thr: dashed threshold line (or null), crit: critical hours shaded
+  function chart(svg, series, thr, crit, opt = {}) {
+    // drawing size follows the rendered width (min 360), so labels stay at their real pixel size in any column and on phones
+    const W = opt.w || Math.round(Math.max(360, svg.clientWidth || 720)), Hh = opt.h || Math.round(Math.min(340, Math.max(260, W * 0.4))), L = 52, R = 16, T = 28, B = 36, fs = opt.fs || 12;
+    svg.setAttribute('viewBox', `0 0 ${W} ${Hh}`);
+    const all = series.flatMap(s => s.v).concat(thr == null ? [] : [thr]);
+    let max = Math.max(...all, 1e-6) * 1.08; const step = niceStep(max / 5); max = Math.ceil(max / step) * step;
+    const X = h => L + (h + 0.5) * (W - L - R) / 24, Y = v => T + (1 - v / max) * (Hh - T - B);
+    const bw = (W - L - R) / 24;
+    let s = '';
+    crit.forEach(h => s += `<rect x="${(L + h * bw).toFixed(1)}" y="${T}" width="${bw.toFixed(1)}" height="${Hh - T - B}" fill="var(--crit-soft)"/>`);
+    for (let v = 0; v <= max + 1e-9; v += step) s += `<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end" font-size="${fs}" fill="var(--muted)" font-family="var(--mono)">${fmt(v, step < 1 ? 1 : 0)}</text>`;
+    for (let h = 0; h < 24; h += W < 480 ? 6 : 3) s += `<text x="${X(h).toFixed(1)}" y="${Hh - 12}" text-anchor="middle" font-size="${fs}" fill="var(--muted)" font-family="var(--mono)">${String(h).padStart(2, '0')}:00</text>`;
+    s += `<text x="${L - 8}" y="${T - 14}" text-anchor="end" font-size="${fs - 1}" fill="var(--muted)">m³/saat</text>`;
+    if (thr != null) {
+      s += `<line x1="${L}" x2="${W - R}" y1="${Y(thr).toFixed(1)}" y2="${Y(thr).toFixed(1)}" stroke="var(--crit)" stroke-width="1.5" stroke-dasharray="6 5"/>`;
+      s += `<text x="${W - R}" y="${(Y(thr) - 6).toFixed(1)}" text-anchor="end" font-size="${fs}" fill="var(--crit)" font-weight="600">eşik ${fmt(thr)}</text>`;
+    }
+    series.forEach(se => {
+      const d = se.v.map((v, h) => `${h ? 'L' : 'M'}${X(h).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
+      s += `<path class="ln" d="${d}" fill="none" stroke="${se.c}" stroke-width="${se.w || 2.25}" ${se.dash ? 'stroke-dasharray="7 5"' : ''} stroke-linejoin="round" stroke-linecap="round"/>`;
+      if (se.peak) { const pk = se.v.indexOf(Math.max(...se.v)); s += `<circle cx="${X(pk).toFixed(1)}" cy="${Y(se.v[pk]).toFixed(1)}" r="4" fill="${se.c}"/>`; }
+    });
+    svg.innerHTML = s;
+  }
+  return { fmt, pct, chart };
+})();
+
+</script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const { fmt, pct, chart } = BFV;
   const DESC = {
     S1: 'Sulamanın %90\'ı şebekeden, %70\'i gündüz; otellerin %60\'ı katılıyor; alternatif su, ikame edilebilir hacmin %30\'u kadar.',
     S2: 'Sulamanın %50\'si şebekeden, %50\'si gündüz; otellerin %40\'ı katılıyor; alternatif su %20.',
     S3: 'Sulamanın yalnız %20\'si şebekeden (kalanı kuyudan); %50\'si gündüz; katılım %40; alternatif su %20.',
     S4: 'Sulamanın %50\'si şebekeden ama yalnız %10\'u gündüz (oteller zaten gece suluyor); katılım %40; alternatif su %20.',
   };
-  let state = { sc: 'S2', thr: 0.85 }, res = null, decisions = {};
-  try { const s = JSON.parse(localStorage.getItem('bf-ui') || '{}'); if (s.sc in BF.SCENARIOS) state.sc = s.sc; if (s.thr) state.thr = s.thr; } catch (e) {}
+  let state = { ...BF.DEFAULT, view: 'bolge', hotel: 'A' }, res = null, decisions = {};
+  try { const s = JSON.parse(localStorage.getItem('bf-ui') || '{}'); if (s.sc in BF.SCENARIOS) state.sc = s.sc; if (s.thr) state.thr = s.thr; if (s.view) state.view = s.view; if (s.hotel) state.hotel = s.hotel; } catch (e) {}
 
   // ---- scenario buttons ----
   Object.keys(BF.SCENARIOS).forEach(k => {
@@ -557,32 +762,9 @@ if (typeof module !== 'undefined') module.exports = BF;
   $('allok').addEventListener('click', () => { res.recs.forEach((r, i) => decisions[i] = 'ok'); renderPlan(); });
   $('reset').addEventListener('click', () => { decisions = {}; renderPlan(); });
 
-  // ---- chart ----
-  const W = 720, Hh = 300, L = 52, R = 16, T = 16, B = 36;
-  function chart(svg, series, thr, crit) {
-    const all = series.flatMap(s => s.v).concat([thr]);
-    let max = Math.max(...all) * 1.08; const step = niceStep(max / 5); max = Math.ceil(max / step) * step;
-    const X = h => L + (h + 0.5) * (W - L - R) / 24, Y = v => T + (1 - v / max) * (Hh - T - B);
-    const bw = (W - L - R) / 24;
-    let s = '';
-    crit.forEach(h => s += `<rect x="${(L + h * bw).toFixed(1)}" y="${T}" width="${bw.toFixed(1)}" height="${Hh - T - B}" fill="var(--crit-soft)"/>`);
-    for (let v = 0; v <= max + 1e-9; v += step) s += `<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end" font-size="12" fill="var(--muted)" font-family="var(--mono)">${fmt(v)}</text>`;
-    for (let h = 0; h < 24; h += 3) s += `<text x="${X(h).toFixed(1)}" y="${Hh - 12}" text-anchor="middle" font-size="12" fill="var(--muted)" font-family="var(--mono)">${String(h).padStart(2, '0')}:00</text>`;
-    s += `<text x="${L - 8}" y="${T - 4}" text-anchor="end" font-size="11" fill="var(--muted)">m³/saat</text>`;
-    s += `<line x1="${L}" x2="${W - R}" y1="${Y(thr).toFixed(1)}" y2="${Y(thr).toFixed(1)}" stroke="var(--crit)" stroke-width="1.5" stroke-dasharray="6 5"/>`;
-    s += `<text x="${W - R}" y="${(Y(thr) - 6).toFixed(1)}" text-anchor="end" font-size="12" fill="var(--crit)" font-weight="600">eşik ${fmt(thr)}</text>`;
-    series.forEach(se => {
-      const d = se.v.map((v, h) => `${h ? 'L' : 'M'}${X(h).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
-      s += `<path class="ln" d="${d}" fill="none" stroke="${se.c}" stroke-width="${se.w || 2.25}" ${se.dash ? 'stroke-dasharray="7 5"' : ''} stroke-linejoin="round" stroke-linecap="round"/>`;
-      if (se.peak) { const pk = se.v.indexOf(Math.max(...se.v)); s += `<circle cx="${X(pk).toFixed(1)}" cy="${Y(se.v[pk]).toFixed(1)}" r="4" fill="${se.c}"/>`; }
-    });
-    svg.innerHTML = s;
-  }
-  function niceStep(x) { const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
-
   // ---- render ----
   function update() {
-    try { localStorage.setItem('bf-ui', JSON.stringify(state)); } catch (e) {}
+    save();
     [...$('scseg').children].forEach(b => b.setAttribute('aria-pressed', b.dataset.k === state.sc));
     $('thrv').textContent = '%' + Math.round(state.thr * 100);
     $('scdesc').textContent = DESC[state.sc];
@@ -624,35 +806,105 @@ if (typeof module !== 'undefined') module.exports = BF;
     renderPlan();
   }
 
+  // one recommendation card; the same decision state is shared by the region, hotel and incentive views
+  function recEl(i) {
+    const r = res.recs[i], st = decisions[i] || 'wait';
+    const el = document.createElement('div'); el.className = 'rec'; el.dataset.state = st;
+    el.innerHTML = `<div><div class="who">${r.hotel} · ${r.cat}</div><div class="muted" style="font-size:14px">${r.text}</div></div>
+      <div class="acts"><button class="btn ok" aria-pressed="${st === 'ok'}">Onayla</button><button class="btn no" aria-pressed="${st === 'no'}">Reddet</button></div>`;
+    el.querySelector('.ok').addEventListener('click', () => { decisions[i] = 'ok'; renderPlan(); });
+    el.querySelector('.no').addEventListener('click', () => { decisions[i] = 'no'; renderPlan(); });
+    return el;
+  }
+
   function renderPlan() {
     const k = res.k, base = k.base.R;
     $('recs').innerHTML = res.recs.length ? '' : '<p class="muted">Bu senaryoda katılan oteller için öneri yok.</p>';
-    res.recs.forEach((r, i) => {
-      const st = decisions[i] || 'wait';
-      const el = document.createElement('div'); el.className = 'rec'; el.dataset.state = st;
-      el.innerHTML = `<div><div class="who">${r.hotel} · ${r.cat}</div><div class="muted" style="font-size:14px">${r.text}</div></div>
-        <div class="acts"><button class="btn ok" aria-pressed="${st === 'ok'}">Onayla</button><button class="btn no" aria-pressed="${st === 'no'}">Reddet</button></div>`;
-      el.querySelector('.ok').addEventListener('click', () => { decisions[i] = 'ok'; renderPlan(); });
-      el.querySelector('.no').addEventListener('click', () => { decisions[i] = 'no'; renderPlan(); });
-      $('recs').appendChild(el);
-    });
+    res.recs.forEach((r, i) => $('recs').appendChild(recEl(i)));
     const nOk = Object.values(decisions).filter(v => v === 'ok').length, nNo = Object.values(decisions).filter(v => v === 'no').length;
     $('reccount').textContent = `${res.recs.length} öneri · ${nOk} onaylandı · ${nNo} reddedildi`;
-    const plan = base.slice(), credit = {};
-    res.recs.forEach((r, i) => {
-      if (decisions[i] !== 'ok') return;
-      r.delta.forEach((d, h) => plan[h] += d);
-      credit[r.hotel] = (credit[r.hotel] || 0) + res.critHours.reduce((s, h) => s + Math.max(0, -r.delta[h]), 0);
-    });
+    const ap = BF.applyDecisions(res, decisions), plan = ap.plan, credit = ap.credit;
     chart($('c3'), [{ v: base, c: 'var(--base)' }, { v: plan, c: 'var(--accent)', dash: true, w: 2.75 }], res.thr, res.critHours);
-    const crit0 = res.critHours.reduce((s, h) => s + base[h], 0), crit1 = res.critHours.reduce((s, h) => s + plan[h], 0);
-    $('p-red').textContent = crit0 > 0 ? pct(1 - crit1 / crit0) : '—';
-    $('p-exc').textContent = fmt(plan.reduce((s, v) => s + Math.max(0, v - res.thr), 0), 1);
+    $('p-red').textContent = ap.critRed == null ? '—' : pct(ap.critRed);
+    $('p-exc').textContent = fmt(ap.exceed, 1);
     const names = Object.keys(credit);
     $('tcred').innerHTML = `<tr><th>Otel</th><th class="n">Esneklik kredisi (m³)</th></tr>` +
       (names.length ? names.map(n => `<tr><td>${n}</td><td class="n">${fmt(credit[n], 1)}</td></tr>`).join('') : `<tr><td colspan="2" class="muted">Önerileri onayladıkça krediler burada görünür.</td></tr>`);
+    renderHotel();
+    renderIncentive();
   }
-  update();
+
+  // ---- hotel view: slices of the same run (BF.hotelView), no new calculation ----
+  res = BF.run(state.sc, state.thr);
+  if (!res.inputs.some(x => x.id === state.hotel)) state.hotel = 'A';
+  res.inputs.forEach(x => { const o = document.createElement('option'); o.value = x.id; o.textContent = `${x.name} · ${x.type}`; $('hsel').appendChild(o); });
+  $('hsel').value = state.hotel;
+  $('hsel').addEventListener('change', e => { state.hotel = e.target.value; save(); renderHotel(); });
+  function renderHotel() {
+    const v = BF.hotelView(res, state.hotel, decisions), x = v.x, sum = a => a.reduce((s, y) => s + y, 0);
+    [...$('hsel').children].forEach(o => { const xi = res.inputs.find(y => y.id === o.value); o.textContent = `${xi.name} · ${xi.type}${xi.joined ? ' · pilotta' : ''}`; });
+    if (!v.joined) {
+      $('hbody').innerHTML = `<div class="callout neutral"><strong>Bu otel pilotta yer almıyor.</strong> ${res.sc.name} senaryosunda ${res.inputs.filter(y => y.joined).length} otel katılıyor (${res.inputs.filter(y => y.joined).map(y => y.name).join(', ')}). Katılmayan otellere öneri verilmez ve kredi yazılmaz.</div>`;
+      return;
+    }
+    const crit0 = res.critHours.reduce((s, h) => s + v.base[h], 0);
+    $('hbody').innerHTML = `
+      <div class="grid2">
+        <div class="card stack">
+          <h3>${x.name}: yarınki şebeke çekişi</h3>
+          <svg class="chart" id="c4" viewBox="0 0 720 300" role="img" aria-label="Otelin yarınki saatlik şebeke çekişi tahmini ve onaylanan plana göre beklenen çekiş"></svg>
+          <div class="legend"><span><i style="border-color:var(--base)"></i>Tahmin (mevcut işletme)</span><span><i class="dash" style="border-color:var(--accent)"></i>Plan: onaylanan önerilere göre beklenen</span><span><i class="band"></i>Bölgenin kritik saatleri</span></div>
+          <p class="foot">Otel kendi eşiğini değil, bölgenin kritik saat sinyalini görür. Prototipte otel seçici rolleri göstermek içindir; pilotta her otel yalnız kendi ekranını görür.</p>
+        </div>
+        <div class="card stack">
+          <div class="metric"><span class="v">${fmt(sum(v.base))}</span><span class="l">yarın şebekeden tahmini çekiş (m³)</span></div>
+          <div class="metric"><span class="v">${fmt(crit0, 1)}</span><span class="l">bunun kritik saatlere düşen kısmı (m³)</span></div>
+          <div class="metric"><span class="v" style="color:var(--accent)">${fmt(v.credit, 1)}</span><span class="l">esneklik kredisi, onaylanan plana göre (m³)</span></div>
+        </div>
+      </div>
+      <div class="card stack">
+        <h3>Bu otele düşen öneriler</h3>
+        <div class="recs" id="hrecs"></div>
+      </div>
+      <div class="card stack">
+        <h3>Operasyon kısıtları</h3>
+        <div class="tablewrap"><table>
+          <tr><th>Kalem</th><th>Yarınki mevcut düzen</th><th>Kısıt</th><th>Esneklik</th></tr>
+          ${v.constraints.map(c => `<tr><td>${c.item}</td><td>${c.now || '—'}</td><td>${c.rule}</td><td>${c.flex}</td></tr>`).join('')}
+        </table></div>
+        <p class="foot">Salt okunur. Pilotta bu değerler otelin teknik ekibiyle birlikte girilecek; prototipteki değerler sentetiktir.</p>
+      </div>`;
+    if (!v.recIdx.length) $('hrecs').innerHTML = '<p class="muted">Bu senaryo ve eşikte bu otel için öneri yok.</p>';
+    v.recIdx.forEach(i => $('hrecs').appendChild(recEl(i)));
+    chart($('c4'), [{ v: v.base, c: 'var(--base)' }, { v: v.plan, c: 'var(--accent)', dash: true, w: 2.75 }], null, res.critHours);
+  }
+
+  // ---- incentive view: credit rule and table (BF.credits) ----
+  function renderIncentive() {
+    const c = BF.credits(res, decisions);
+    $('i-crit').textContent = res.critHours.length ? `${res.critHours.length} saat (${BF.spans(res.critHours)})` : 'kritik saat yok';
+    $('i-total').textContent = fmt(c.total, 1) + ' m³';
+    $('i-share').textContent = pct(c.share);
+    $('i-note').innerHTML = `Bütün öneriler onaylanırsa: <span class="num">${fmt(c.potentialTotal, 1)}</span> m³ (<span class="num">${pct(c.crit0 > 0 ? c.potentialTotal / c.crit0 : 0)}</span>). Bu oran, Bölge görünümündeki "kritik saatlerde beklenen azalma" ile aynı hesaptır.`;
+    $('tcredit').innerHTML = `<tr><th>Otel</th><th>Tür</th><th class="n">Kredi, onaylanan plan (m³)</th><th class="n">Tüm öneriler onaylanırsa (m³)</th></tr>` +
+      (c.rows.length ? c.rows.map(r => `<tr><td>${r.hotel}</td><td>${r.type}</td><td class="n">${fmt(r.credit, 1)}</td><td class="n">${fmt(r.potential, 1)}</td></tr>`).join('') +
+        `<tr class="total"><td>Toplam</td><td></td><td class="n">${fmt(c.total, 1)}</td><td class="n">${fmt(c.potentialTotal, 1)}</td></tr>` : `<tr><td colspan="4" class="muted">Bu senaryoda pilotta otel yok.</td></tr>`);
+  }
+
+  // ---- tabs: #bolge, #otel, #tesvik, #pilot (deep-linkable for the demo) ----
+  const VIEWS = ['bolge', 'otel', 'tesvik', 'pilot'];
+  function save() { try { localStorage.setItem('bf-ui', JSON.stringify(state)); } catch (e) {} }
+  function setView(v) {
+    state.view = VIEWS.includes(v) ? v : 'bolge'; save();
+    VIEWS.forEach(k => { $('v-' + k).hidden = k !== state.view; $('tab-' + k).setAttribute('aria-selected', k === state.view); });
+    $('controls').hidden = state.view === 'pilot';
+    try { if (location.hash !== '#' + state.view) history.replaceState(null, '', '#' + state.view); } catch (e) {}
+    update();                                         // re-draw charts at the now-visible column width
+  }
+  VIEWS.forEach(k => $('tab-' + k).addEventListener('click', () => setView(k)));
+  addEventListener('hashchange', () => { const h = (location.hash || '').slice(1); if (VIEWS.includes(h) && h !== state.view) setView(h); });
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(update, 200); });   // charts follow the column width
+  setView((location.hash || '').slice(1) || state.view);
 })();
 </script>
 

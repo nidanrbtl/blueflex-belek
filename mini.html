@@ -1,0 +1,553 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+</head>
+<body>
+<title>BlueFlex Mini</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600;700&display=swap">
+<style>
+/* Mini page: the core loop only — forecast → three recommendations → expected draw and one indicator. Same core and setting as the main panel. */
+:root{
+  --bg:#f4f7f8; --surface:#ffffff; --ink:#10242b; --muted:#5b6f76; --line:#d7e1e4; --soft:#e9f0f2;
+  --accent:#0b7a8a; --accent-soft:#d8eef1; --base:#7d8f95; --crit:#c2412d; --crit-soft:#f8e3df;
+  --sans:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif; --mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0d171a; --surface:#132328; --ink:#e3eef0; --muted:#97adb3; --line:#27404a; --soft:#18303a;
+  --accent:#3fb6c6; --accent-soft:#163b42; --base:#8aa0a6; --crit:#ef7b67; --crit-soft:#3b211d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0d171a; --surface:#132328; --ink:#e3eef0; --muted:#97adb3; --line:#27404a; --soft:#18303a;
+  --accent:#3fb6c6; --accent-soft:#163b42; --base:#8aa0a6; --crit:#ef7b67; --crit-soft:#3b211d; color-scheme:dark}
+body{background:var(--bg);color:var(--ink);font-family:var(--sans);font-size:15px;line-height:1.5;margin:0}
+.wrap{max-width:1080px;margin:0 auto;padding-block:24px 40px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:grid;gap:18px}
+h1{font-size:26px;line-height:1.15;margin:0;letter-spacing:-.01em}
+h2{font-size:16px;margin:0}
+p{margin:0}
+.muted{color:var(--muted)}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+.top{display:flex;flex-wrap:wrap;gap:8px 16px;align-items:flex-end;justify-content:space-between}
+.top a{color:var(--accent);font-weight:600;font-size:14px}
+.grid{display:grid;grid-template-columns:minmax(0,3fr) minmax(0,2fr);gap:16px;align-items:start}
+@media (max-width:820px){.grid{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:16px;min-width:0;display:grid;gap:12px}
+.step{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;margin-right:8px;vertical-align:1px}
+.chart{width:100%;height:auto;display:block}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;font-size:13px;color:var(--muted)}
+.legend i{display:inline-block;width:18px;height:0;border-top:2.5px solid;vertical-align:middle;margin-right:6px}
+.legend i.dash{border-top-style:dashed}
+.legend i.band{height:10px;border:0;background:var(--crit-soft);width:14px}
+.rec{display:grid;gap:8px;border:1px solid var(--line);border-radius:10px;padding:12px}
+.rec[data-state="ok"]{border-color:var(--accent);background:var(--accent-soft)}
+.rec[data-state="no"]{opacity:.6}
+.rec .who{font-weight:600;font-size:14px}
+.rec .txt{font-size:14px;color:var(--muted)}
+.rec .acts{display:flex;gap:6px;align-items:center;flex-wrap:wrap}
+.rec .eff{margin-left:auto;font-size:12px;color:var(--muted)}
+.btn{font:inherit;font-size:13px;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);padding:6px 12px;border-radius:8px;cursor:pointer}
+.btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn[aria-pressed="true"].ok{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn[aria-pressed="true"].no{background:var(--crit-soft);border-color:var(--crit);color:var(--crit)}
+.kpi{display:grid;gap:2px;border-top:1px solid var(--line);padding-top:12px}
+.kpi .v{font-family:var(--mono);font-size:34px;font-weight:500;font-variant-numeric:tabular-nums;color:var(--accent)}
+.kpi .l{font-size:14px;font-weight:600}
+.foot{font-size:13px;color:var(--muted)}
+.disclaimer{font-size:13px;color:var(--muted);text-align:center;border-top:1px solid var(--line);padding-top:12px}
+@media (prefers-reduced-motion:no-preference){.chart path.ln{transition:d .25s ease}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="eyebrow">ClimaThon · Mini prototip · Çekirdek döngü</div>
+      <h1>BlueFlex Belek</h1>
+      <p class="muted" id="setting"></p>
+    </div>
+    <a href="index.html">Tam panele git →</a>
+  </div>
+
+  <div class="grid">
+    <div class="card">
+      <h2><span class="step">1</span>Yarının bölgesel tahmini ve kritik saatler</h2>
+      <svg class="chart" id="c" viewBox="0 0 720 320" role="img" aria-label="Yarının saatlik bölgesel şebeke çekişi tahmini, eşik, kritik saatler ve onaylanan plana göre beklenen çekiş"></svg>
+      <div class="legend"><span><i style="border-color:var(--base)"></i>Tahmin (mevcut işletme)</span><span><i class="dash" style="border-color:var(--accent)"></i>Plan: onaylanan önerilere göre beklenen</span><span><i class="dash" style="border-color:var(--crit)"></i>Eşik</span><span><i class="band"></i>Kritik saat</span></div>
+      <p class="foot" id="critline"></p>
+    </div>
+
+    <div class="card">
+      <h2><span class="step">2</span>En etkili 3 öneri</h2>
+      <div id="recs" style="display:grid;gap:10px"></div>
+      <div class="kpi">
+        <span class="l"><span class="step">3</span>Kritik saatlerde beklenen azalma</span>
+        <span class="v" id="red">%0,0</span>
+        <span class="foot" id="rednote"></span>
+      </div>
+    </div>
+  </div>
+
+  <p class="disclaimer">Sentetik veri · simülasyon içi sonuç · gerçek tasarruf iddiası değildir</p>
+</div>
+
+<script>
+/* BlueFlex Belek — simulation core (pure functions, no DOM) */
+const BF = (() => {
+  const H = 24, DAYS = 60;           // 60 history days (0..59), target day = 60
+  const STEP = 0.5;                  // m3 per greedy move
+  function rng(seed) { let a = seed >>> 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
+  function gauss(r) { let u = 0, v = 0; while (u === 0) u = r(); v = r(); return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v); }
+  const sum = a => a.reduce((s, x) => s + x, 0);
+  const zeros = () => new Array(H).fill(0);
+  const range = (a, b) => { const o = []; for (let h = a; h !== b; h = (h + 1) % H) o.push(h); return o; };
+
+  // Hourly shape profiles (normalised to sum 1). Room peaks 08-10 and 17-18:30 (Şahin vd. 2024).
+  function norm(a) { const s = sum(a); return a.map(x => x / s); }
+  const PROF = {
+    rooms: norm([2,1.5,1.2,1,1,1.5,3,6,9,8,5,4,3.5,3,3,3.5,5,7.5,7,5.5,4.5,4,3.5,2.5]),
+    kitchen: norm([1,0.6,0.5,0.5,0.6,1.5,4,6.5,6,4,3.5,5,6.5,6,4,3,3,4,6,7,6.5,4,2.5,1.5]),
+    common: norm([2,1.5,1.5,1.5,1.5,2,3,4,5,5.5,6,6,6,6,6,6,6,6,5.5,5,4.5,4,3,2.5]),
+  };
+
+  const HOTELS = [
+    { id: 'A', name: 'Otel A', type: 'Tatil köyü', beds: 1200, L: 1.154 },
+    { id: 'B', name: 'Otel B', type: 'Tatil köyü', beds: 950, L: 1.154 },
+    { id: 'C', name: 'Otel C', type: '5 yıldızlı', beds: 800, L: 0.575 },
+    { id: 'D', name: 'Otel D', type: '5 yıldızlı', beds: 650, L: 0.575 },
+    { id: 'E', name: 'Otel E', type: '5 yıldızlı', beds: 500, L: 0.575 },
+    { id: 'F', name: 'Otel F', type: '4 yıldızlı', beds: 450, L: 0.349 },
+    { id: 'G', name: 'Otel G', type: '4 yıldızlı', beds: 400, L: 0.349 },
+  ];
+  const JOIN_ORDER = ['A', 'C', 'F', 'B', 'D', 'G', 'E'];
+  const SHARE_RANGE = {
+    'Tatil köyü': { irr: [0.45, 0.55], cool: [0.08, 0.12] },
+    '5 yıldızlı': { irr: [0.35, 0.45], cool: [0.06, 0.10] },
+    '4 yıldızlı': { irr: [0.25, 0.35], cool: [0.03, 0.06] },
+  };
+  const SCENARIOS = {
+    S1: { name: 'S1 İyimser', net: 0.9, day: 0.7, p: 0.6, sub: 0.3 },
+    S2: { name: 'S2 Temel', net: 0.5, day: 0.5, p: 0.4, sub: 0.2 },
+    S3: { name: 'S3 Kuyu ağırlıklı', net: 0.2, day: 0.5, p: 0.4, sub: 0.2 },
+    S4: { name: 'S4 Gece sulama yaygın', net: 0.5, day: 0.1, p: 0.4, sub: 0.2 },
+  };
+  // Operating windows [start, end) — shifted irrigation 21:00-09:00, laundry 06:00-22:00, backwash at night 22:00-06:00
+  const WIN_DEF = { irr: [21, 9], lau: [6, 22], pool: [22, 6] };
+  const WIN = Object.fromEntries(Object.entries(WIN_DEF).map(([k, [a, b]]) => [k, new Set(range(a, b))]));
+
+  // ---------- 1. Data: hotels' fixed parameters ----------
+  function buildHotels() {
+    const r = rng(42);
+    return HOTELS.map(h => {
+      const sr = SHARE_RANGE[h.type];
+      const irr = sr.irr[0] + r() * (sr.irr[1] - sr.irr[0]);
+      const cool = sr.cool[0] + r() * (sr.cool[1] - sr.cool[0]);
+      const lau = 0.04 + r() * 0.03, pool = 0.03 + r() * 0.02;
+      const rest = 1 - irr - cool - lau - pool;            // split by Şahin ratios 22.9 : 19.6 : 5.3
+      const k = rest / (22.9 + 19.6 + 5.3);
+      const sh = { irr, cool, lau, pool, rooms: 22.9 * k, kitchen: 19.6 * k, common: 5.3 * k };
+      return { ...h, sh, irrStart: 13 + Math.floor(r() * 3) };
+    });
+  }
+
+  // ---------- Weather (synthetic, labelled as such) ----------
+  function weather() {
+    const r = rng(7);
+    const T = [], Tf = [];
+    for (let d = 0; d <= DAYS; d++) {
+      const m = 29 + 1.6 * Math.sin(2 * Math.PI * d / 23) + gauss(r) * 0.9;
+      const bias = gauss(r) * 1.0;                                    // forecast error, day-level
+      const row = [], rowf = [];
+      for (let h = 0; h < H; h++) {
+        const t = m + 5.5 * Math.cos(2 * Math.PI * (h - 15) / 24) + gauss(r) * 0.4;
+        row.push(t); rowf.push(t + bias + gauss(r) * 0.5);
+      }
+      T.push(row); Tf.push(rowf);
+    }
+    return { T, Tf };
+  }
+
+  // ---------- History: weather-driven base load per hotel (rooms+kitchen+common) and cooling ----------
+  function history(hotels, W) {
+    const r = rng(99);
+    const occ = [];
+    for (let d = 0; d <= DAYS; d++) occ.push(Math.min(0.97, 0.9 + gauss(r) * 0.02 + ((d % 7) >= 5 ? 0.03 : 0)));
+    const out = hotels.map(ht => {
+      const base = [], cool = [];
+      for (let d = 0; d <= DAYS; d++) {
+        const daily = ht.beds * occ[d] * ht.L;                       // m3/day
+        const tm = sum(W.T[d]) / H, wf = 1 + 0.015 * (tm - 29);
+        const brow = [], crow = [];
+        for (let h = 0; h < H; h++) {
+          const shape = ht.sh.rooms * PROF.rooms[h] + ht.sh.kitchen * PROF.kitchen[h] + ht.sh.common * PROF.common[h];
+          brow.push(daily * shape * wf * (1 + 0.008 * (W.T[d][h] - 29)) * (1 + gauss(r) * 0.06));
+          crow.push(coolingAt(ht, daily, W.T[d][h]));
+        }
+        base.push(brow); cool.push(crow);
+      }
+      return { base, cool };
+    });
+    return { occ, out };
+  }
+  // cooling-tower make-up water: proportional to temperature above 22°C, scaled so that a reference day gives the hotel's cooling share
+  function coolingAt(ht, daily, t) {
+    const refSum = 168; // sum over a reference day of max(0, T-22) for mean 29 °C, amplitude 5.5 (24 × 7)
+    return ht.sh.cool * daily * Math.max(0, t - 22) / refSum;
+  }
+
+  // ---------- 2. Forecast model: ridge regression, day-ahead (fit at 00:00 with known data only) ----------
+  function feats(d, h, W, occ, prevY) {
+    const f = new Array(H).fill(0); f[h] = 1;
+    return f.concat([W.Tf[d][h] - 29, occ[d] - 0.9, (d % 7) >= 5 ? 1 : 0, prevY]);
+  }
+  function fitRidge(X, y, lam) {
+    const p = X[0].length, A = [], b = new Array(p).fill(0);
+    for (let i = 0; i < p; i++) A.push(new Array(p).fill(0));
+    for (let n = 0; n < X.length; n++) { const x = X[n]; for (let i = 0; i < p; i++) { b[i] += x[i] * y[n]; for (let j = 0; j < p; j++) A[i][j] += x[i] * x[j]; } }
+    for (let i = 0; i < p; i++) A[i][i] += lam;
+    for (let c = 0; c < p; c++) {                // Gaussian elimination with partial pivoting
+      let piv = c; for (let r = c + 1; r < p; r++) if (Math.abs(A[r][c]) > Math.abs(A[piv][c])) piv = r;
+      [A[c], A[piv]] = [A[piv], A[c]]; [b[c], b[piv]] = [b[piv], b[c]];
+      for (let r = c + 1; r < p; r++) { const f = A[r][c] / A[c][c]; for (let k = c; k < p; k++) A[r][k] -= f * A[c][k]; b[r] -= f * b[c]; }
+    }
+    const w = new Array(p).fill(0);
+    for (let i = p - 1; i >= 0; i--) { let s = b[i]; for (let k = i + 1; k < p; k++) s -= A[i][k] * w[k]; w[i] = s / A[i][i]; }
+    return w;
+  }
+  const dot = (w, x) => w.reduce((s, wi, i) => s + wi * x[i], 0);
+  function trainAndForecast(hist, W) {
+    const nH = hist.out.length;
+    // rolling-origin test over days 50..59: for each test day refit on days < d (no leakage)
+    let errM = 0, errN = 0, n = 0, rErrM = 0, rErrN = 0, rn = 0;
+    for (let d = 50; d < DAYS; d++) {
+      const regAct = zeros(), regM = zeros(), regN = zeros();
+      for (let i = 0; i < nH; i++) {
+        const Y = hist.out[i].base, X = [], y = [];
+        for (let dd = 1; dd < d; dd++) for (let h = 0; h < H; h++) { X.push(feats(dd, h, W, hist.occ, Y[dd - 1][h])); y.push(Y[dd][h]); }
+        const w = fitRidge(X, y, 1.0);
+        for (let h = 0; h < H; h++) {
+          const pm = dot(w, feats(d, h, W, hist.occ, Y[d - 1][h])), pn = Y[d - 1][h], a = Y[d][h];
+          errM += Math.abs(pm - a) / a; errN += Math.abs(pn - a) / a; n++;
+          regAct[h] += a; regM[h] += pm; regN[h] += pn;
+        }
+      }
+      for (let h = 0; h < H; h++) { rErrM += Math.abs(regM[h] - regAct[h]) / regAct[h]; rErrN += Math.abs(regN[h] - regAct[h]) / regAct[h]; rn++; }
+    }
+    // final fit on days 1..59, forecast target day 60 from 00:00 information
+    const fc = hist.out.map(o => {
+      const X = [], y = [];
+      for (let dd = 1; dd < DAYS; dd++) for (let h = 0; h < H; h++) { X.push(feats(dd, h, W, hist.occ, o.base[dd - 1][h])); y.push(o.base[dd][h]); }
+      const w = fitRidge(X, y, 1.0);
+      return Array.from({ length: H }, (_, h) => Math.max(0, dot(w, feats(DAYS, h, W, hist.occ, o.base[DAYS - 1][h]))));
+    });
+    return { fc, mape: { model: errM / n, naive: errN / n, regModel: rErrM / rn, regNaive: rErrN / rn } };
+  }
+
+  // ---------- Day plan inputs per scenario ----------
+  function dayInputs(hotels, hist, model, W, sc) {
+    const nJoin = Math.round(sc.p * hotels.length);
+    const joined = new Set(JOIN_ORDER.slice(0, nJoin));
+    return hotels.map((ht, i) => {
+      const daily = ht.beds * hist.occ[DAYS] * ht.L;
+      const prot = model.fc[i].slice();
+      const cool = W.Tf[DAYS].map(t => coolingAt(ht, daily, t));            // from the weather forecast
+      const irrNetDaily = daily * ht.sh.irr * sc.net;                       // only the network share loads ASAT
+      const irr = zeros();
+      const dayHrs = range(ht.irrStart, ht.irrStart + 6), nightHrs = range(22, 6);
+      dayHrs.forEach(h => irr[h] += irrNetDaily * sc.day / dayHrs.length);
+      nightHrs.forEach(h => irr[h] += irrNetDaily * (1 - sc.day) / nightHrs.length);
+      const lau = zeros(); range(8, 16).forEach(h => lau[h] += daily * ht.sh.lau / 8);
+      const pool = zeros(); pool[10] = 0.3 * daily * ht.sh.pool;                      // backwash (shiftable)
+      range(8, 20).forEach(h => prot[h] += 0.7 * daily * ht.sh.pool / 12);      // evaporation top-up (protected)
+      // alternative (treated/reclaimed) water: daily budget = sub share of substitutable volume
+      const budget = sc.sub * (irrNetDaily + sum(cool));
+      const tank = { cap: 0.5 * budget, min: 0.05 * budget, refill: 0.5 * budget / 24, qmax: 0.25 * budget };
+      return { id: ht.id, name: ht.name, type: ht.type, beds: ht.beds, joined: joined.has(ht.id), prot, cool, irr, lau, pool, tank, daily };
+    });
+  }
+
+  // ---------- 5. Planner: same engine for both strategies; only the curve being flattened differs ----------
+  function emptyPlan(x) {
+    return { prot: x.prot.slice(), irr: x.irr.slice(), lau: x.lau.slice(), pool: x.pool.slice(), subCool: zeros(), subIrr: zeros() };
+  }
+  function netOf(x, p) { return Array.from({ length: H }, (_, h) => p.prot[h] + x.cool[h] - p.subCool[h] + p.irr[h] - p.subIrr[h] + p.lau[h] + p.pool[h]); }
+  function tankLevels(t, use) { const L = []; let lv = t.cap; for (let h = 0; h < H; h++) { lv = Math.min(t.cap, lv + t.refill) - use[h]; L.push(lv); } return L; }
+  function tankSlack(x, p, h) { const use = p.subCool.map((v, k) => v + p.subIrr[k]); const L = tankLevels(x.tank, use); let s = Infinity; for (let k = h; k < H; k++) s = Math.min(s, L[k] - x.tank.min); return s; }
+
+  // Phase 1 — right source: substitute cooling, then irrigation, at hour h (always saves drinking water)
+  function trySub(x, p, h) {
+    const pump = x.tank.qmax - p.subCool[h] - p.subIrr[h];
+    const room = Math.min(pump, tankSlack(x, p, h));
+    const avCool = x.cool[h] - p.subCool[h], avIrr = p.irr[h] - p.subIrr[h];
+    if (room <= 0.05) return false;
+    if (avCool > 0.05) { p.subCool[h] += Math.min(STEP, avCool, room); return true; }
+    if (avIrr > 0.05) { p.subIrr[h] += Math.min(STEP, avIrr, room); return true; }
+    return false;
+  }
+  // Phase 2 — right time: move a flexible use from h to the lowest allowed hour, only if it strictly flattens the curve
+  function tryShift(x, p, h, curve) {
+    let best = null;
+    for (const cat of ['irr', 'lau', 'pool']) {
+      const avail = cat === 'irr' ? p.irr[h] - p.subIrr[h] : p[cat][h];
+      if (avail <= 0.05) continue;
+      const v = Math.min(STEP, avail);
+      for (const d of WIN[cat]) {
+        if (d === h) continue;
+        if (curve[d] + v <= curve[h] - v - 1e-9 && (!best || curve[d] < best.cv)) best = { cat, d, v, cv: curve[d] };
+      }
+    }
+    if (!best) return false;
+    p[best.cat][h] -= best.v; p[best.cat][best.d] += best.v; return true;
+  }
+  // Generic two-phase planner. `members` = hotels this planner controls, `curveOf` = the curve it watches,
+  // `level` = shifting happens only while that curve is above this level (same % rule for both strategies).
+  function twoPhase(inputs, plans, members, curveOf, level) {
+    for (let it = 0; it < 20000; it++) {                       // phase 1: use alternative water at the highest hours first
+      const c = curveOf(), order = [...Array(H).keys()].sort((a, b) => c[b] - c[a]);
+      let done = false;
+      for (const h of order) { for (const i of members) { if (trySub(inputs[i], plans[i], h)) { done = true; break; } } if (done) break; }
+      if (!done) break;
+    }
+    for (let it = 0; it < 20000; it++) {                       // phase 2: shift only while above the level
+      const c = curveOf(), order = [...Array(H).keys()].filter(h => c[h] > level + 1e-9).sort((a, b) => c[b] - c[a]);
+      let done = false;
+      for (const h of order) {
+        const nets = members.map(i => netOf(inputs[i], plans[i])[h]);
+        const cand = members.map((i, k) => [i, nets[k]]).sort((a, b) => b[1] - a[1]).map(e => e[0]);
+        for (const i of cand) { if (tryShift(inputs[i], plans[i], h, c)) { done = true; break; } }
+        if (done) break;
+      }
+      if (!done) break;
+    }
+  }
+  // Independent: each joined hotel plans alone, watching only its own curve and its own level (thrPct × own baseline peak)
+  function planIndependent(inputs, thrPct) {
+    const plans = inputs.map(emptyPlan);
+    inputs.forEach((x, i) => {
+      if (!x.joined) return;
+      const level = thrPct * Math.max(...netOf(x, plans[i]));
+      twoPhase(inputs, plans, [i], () => netOf(x, plans[i]), level);
+    });
+    return plans;
+  }
+  // BlueFlex: the same joined hotels, same capacities and windows, planned together against the regional curve and threshold
+  function planRegional(inputs, thr) {
+    const plans = inputs.map(emptyPlan);
+    const members = inputs.map((x, i) => i).filter(i => inputs[i].joined);
+    twoPhase(inputs, plans, members, () => regional(inputs, plans), thr);
+    return plans;
+  }
+
+  // ---------- 7. Verifier: independent of the planner ----------
+  function verify(inputs, plans) {
+    let protectedChange = 0, violations = 0; const issues = [];
+    inputs.forEach((x, i) => {
+      const p = plans[i], tol = 1e-6;
+      const net = netOf(x, p);
+      protectedChange += sum(p.prot.map((v, h) => Math.abs(v - x.prot[h])));   // rooms + kitchen + common areas
+      for (const cat of ['irr', 'lau', 'pool']) {
+        const diff = Math.abs(sum(p[cat]) - sum(x[cat]));
+        if (diff > 1e-6) { violations++; issues.push(`${x.name}: ${cat} hacmi tamamlanmadı`); }
+        for (let h = 0; h < H; h++) if (!WIN[cat].has(h) && p[cat][h] > x[cat][h] + tol) { violations++; issues.push(`${x.name}: ${cat} izinli aralık dışına taşındı (${h}:00)`); }
+      }
+      const use = p.subCool.map((v, k) => v + p.subIrr[k]);
+      tankLevels(x.tank, use).forEach((lv, h) => { if (lv < x.tank.min - tol) { violations++; issues.push(`${x.name}: depo alt sınırın altında (${h}:00)`); } });
+      for (let h = 0; h < H; h++) {
+        if (p.subCool[h] > x.cool[h] + tol) { violations++; issues.push(`${x.name}: soğutma suyundan fazla ikame (${h}:00)`); }
+        if (p.subIrr[h] > p.irr[h] + tol) { violations++; issues.push(`${x.name}: sulamadan fazla ikame (${h}:00)`); }
+        if (use[h] > x.tank.qmax + tol) { violations++; issues.push(`${x.name}: pompa kapasitesi aşıldı (${h}:00)`); }
+        if (net[h] < -tol) { violations++; issues.push(`${x.name}: negatif şebeke çekişi (${h}:00)`); }
+      }
+    });
+    return { protectedChange, violations, issues };
+  }
+
+  // ---------- KPIs ----------
+  function regional(inputs, plans) { const R = zeros(); inputs.forEach((x, i) => netOf(x, plans[i]).forEach((v, h) => R[h] += v)); return R; }
+  function kpis(inputs, plans, thr, critHours) {
+    const R = regional(inputs, plans);
+    const exceed = R.reduce((s, v) => s + Math.max(0, v - thr), 0);
+    const exceedHrs = R.filter(v => v > thr + 1e-9).length;
+    const crit = critHours.reduce((s, h) => s + R[h], 0);
+    let subst = 0, shifted = 0;
+    inputs.forEach((x, i) => { const p = plans[i]; subst += sum(p.subCool) + sum(p.subIrr); for (const c of ['irr', 'lau', 'pool']) shifted += sum(p[c].map((v, h) => Math.max(0, x[c][h] - v))); });
+    const v = verify(inputs, plans);
+    return { R, peak: Math.max(...R), exceed, exceedHrs, crit, subst, shifted, protectedChange: v.protectedChange, violations: v.violations, issues: v.issues };
+  }
+
+  // ---------- Recommendations from the regional plan (each one an additive delta on network draw) ----------
+  function fmtH(h) { return String(h).padStart(2, '0') + ':00'; }
+  function spanList(hours) { if (!hours.length) return []; const hs = [...hours].sort((a, b) => a - b); const out = []; let s = hs[0], e = hs[0]; for (let k = 1; k <= hs.length; k++) { if (k < hs.length && hs[k] === e + 1) { e = hs[k]; continue; } out.push([s, e]); if (k < hs.length) { s = e = hs[k]; } }
+    if (out.length > 1 && out[0][0] === 0 && out[out.length - 1][1] === H - 1) { const last = out.pop(); out[0] = [last[0], out[0][1]]; out.push(out.shift()); }   // join ranges across midnight
+    return out; }
+  const spanText = ([s, e]) => `${fmtH(s)}–${fmtH((e + 1) % 24)}`;
+  function spans(hours) { return spanList(hours).map(spanText).join(', '); }
+  // Up to 3 ranges are listed; beyond that the first 2 are shown and the rest summarised as "+N saat"
+  function spansShort(hours) { const l = spanList(hours); if (l.length <= 3) return l.map(spanText).join(', '); const rest = l.slice(2).reduce((s, [a, b]) => s + (b - a + H) % H + 1, 0); return l.slice(0, 2).map(spanText).join(', ') + ` ve +${rest} saat`; }
+  const m3 = v => v < 10 ? v.toFixed(1).replace('.', ',') : v.toFixed(0);
+  function recommendations(inputs, plans) {
+    const recs = [];
+    inputs.forEach((x, i) => {
+      if (!x.joined) return; const p = plans[i];
+      const sc = sum(p.subCool);
+      if (sc > 1e-6) recs.push({ hotel: x.name, hi: i, cat: 'Soğutma kulesi', text: `${spansShort(p.subCool.map((v, h) => v > 1e-6 ? h : -1).filter(h => h >= 0))} arasında soğutma kulesi besleme suyunun ${m3(sc)} m³'ünü geri kazanılmış sudan karşıla.`, delta: p.subCool.map(v => -v) });
+      const si = sum(p.subIrr), moved = sum(p.irr.map((v, h) => Math.max(0, x.irr[h] - v)));
+      if (si > 1e-6 || moved > 1e-6) {
+        const parts = [];
+        if (moved > 1e-6) parts.push(`${m3(moved)} m³ sulamayı ${spansShort(p.irr.map((v, h) => v < x.irr[h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spansShort(p.irr.map((v, h) => v > x.irr[h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır`);
+        if (si > 1e-6) parts.push(`${m3(si)} m³ sulamayı geri kazanılmış sudan karşıla`);
+        recs.push({ hotel: x.name, hi: i, cat: 'Sulama', text: parts.join('; ') + '.', delta: p.irr.map((v, h) => v - x.irr[h] - p.subIrr[h]) });
+      }
+      for (const [c, label] of [['lau', 'Çamaşırhane'], ['pool', 'Havuz ters yıkama']]) {
+        const mv = sum(p[c].map((v, h) => Math.max(0, x[c][h] - v)));
+        if (mv > 1e-6) recs.push({ hotel: x.name, hi: i, cat: label, text: `${m3(mv)} m³'ü ${spansShort(p[c].map((v, h) => v < x[c][h] - 1e-6 ? h : -1).filter(h => h >= 0))} aralığından ${spansShort(p[c].map((v, h) => v > x[c][h] + 1e-6 ? h : -1).filter(h => h >= 0))} aralığına kaydır.`, delta: p[c].map((v, h) => v - x[c][h]) });
+      }
+    });
+    return recs;
+  }
+
+  // ---------- Operator decisions → expected draw (shared by every page, so all views show the same numbers) ----------
+  // A recommendation's effect = drop in network draw summed over the critical hours (m3)
+  function critImpact(res, rec) { return -res.critHours.reduce((s, h) => s + rec.delta[h], 0); }
+  function topRecs(res, n) { return res.recs.map((r, i) => i).sort((a, b) => critImpact(res, res.recs[b]) - critImpact(res, res.recs[a])).slice(0, n); }
+  // decisions: { recIndex: 'ok' | 'no' }. Flexibility credit = net drop of the hotel's draw in critical hours (never negative).
+  function applyDecisions(res, decisions) {
+    const base = res.k.base.R, plan = base.slice(), credit = {};
+    res.recs.forEach((r, i) => {
+      if (decisions[i] !== 'ok') return;
+      r.delta.forEach((d, h) => plan[h] += d);
+      credit[r.hotel] = (credit[r.hotel] || 0) + critImpact(res, r);
+    });
+    Object.keys(credit).forEach(n => credit[n] = Math.max(0, credit[n]));
+    const crit0 = res.critHours.reduce((s, h) => s + base[h], 0), crit1 = res.critHours.reduce((s, h) => s + plan[h], 0);
+    return { plan, credit, crit0, crit1, critRed: crit0 > 0 ? 1 - crit1 / crit0 : null, exceed: plan.reduce((s, v) => s + Math.max(0, v - res.thr), 0) };
+  }
+
+  // ---------- Per-hotel view of the same run (no new planning: slices of the regional plan and its recommendations) ----------
+  function hotelView(res, id, decisions) {
+    const i = res.inputs.findIndex(x => x.id === id), x = res.inputs[i];
+    const base = netOf(x, emptyPlan(x)), plan = base.slice();
+    const recIdx = res.recs.map((r, k) => k).filter(k => res.recs[k].hi === i);
+    recIdx.forEach(k => { if (decisions[k] === 'ok') res.recs[k].delta.forEach((d, h) => plan[h] += d); });
+    const hrs = a => a.map((v, h) => v > 1e-6 ? h : -1).filter(h => h >= 0);
+    const win = k => `${fmtH(WIN_DEF[k][0])}–${fmtH(WIN_DEF[k][1])}`;
+    const constraints = [
+      { item: 'Sulama', now: spans(hrs(x.irr)), rule: `Kaydırılırsa yalnız ${win('irr')} arasına; günlük hacim tamamlanır`, flex: 'İkame + kaydırma' },
+      { item: 'Çamaşırhane', now: spans(hrs(x.lau)), rule: `${win('lau')} arasında tamamlanır`, flex: 'Kaydırma' },
+      { item: 'Havuz ters yıkama', now: spans(hrs(x.pool)), rule: `${win('pool')} arasında`, flex: 'Kaydırma' },
+      { item: 'Soğutma kulesi', now: 'Sıcaklığa bağlı, gün boyu', rule: 'Zamanı kaydırılamaz', flex: 'Yalnız ikame' },
+      { item: 'Alternatif su deposu', now: `${m3(x.tank.cap)} m³ kapasite`, rule: `Alt sınır ${m3(x.tank.min)} m³ · pompa en çok ${m3(x.tank.qmax)} m³/saat · yenilenme ${m3(x.tank.refill)} m³/saat`, flex: '—' },
+      { item: 'Oda, mutfak, ortak alan, havuz takviyesi', now: 'Tahmin edilen kullanım', rule: 'Değişmez', flex: 'Korunan' },
+    ];
+    return { x, joined: x.joined, base, plan, recIdx, constraints, credit: x.joined ? (applyDecisions(res, decisions).credit[x.name] || 0) : 0 };
+  }
+  // Credit table for the incentive view: approved credit and the full-plan potential per joined hotel
+  function credits(res, decisions) {
+    const all = {}; res.recs.forEach((r, i) => all[i] = 'ok');
+    const now = applyDecisions(res, decisions), full = applyDecisions(res, all);
+    const rows = res.inputs.filter(x => x.joined).map(x => ({ hotel: x.name, type: x.type, credit: now.credit[x.name] || 0, potential: full.credit[x.name] || 0 }));
+    const total = rows.reduce((s, r) => s + r.credit, 0);
+    return { rows, total, crit0: now.crit0, share: now.crit0 > 0 ? total / now.crit0 : 0, potentialTotal: rows.reduce((s, r) => s + r.potential, 0) };
+  }
+
+  // ---------- One full run ----------
+  let cache = null;
+  function prepare() {
+    if (cache) return cache;
+    const hotels = buildHotels(), W = weather(), hist = history(hotels, W), model = trainAndForecast(hist, W);
+    cache = { hotels, W, hist, model };
+    return cache;
+  }
+  function run(scKey, thrPct) {
+    const { hotels, W, hist, model } = prepare();
+    const sc = SCENARIOS[scKey];
+    const inputs = dayInputs(hotels, hist, model, W, sc);
+    const none = inputs.map(emptyPlan);
+    const base = regional(inputs, none);
+    const thr = Math.max(...base) * thrPct;
+    const critHours = [...Array(H).keys()].filter(h => base[h] > thr);
+    const pInd = planIndependent(inputs, thrPct), pReg = planRegional(inputs, thr);
+    return {
+      sc, inputs, thr, critHours, mape: model.mape, Tf: W.Tf[DAYS],
+      k: { base: kpis(inputs, none, thr, critHours), ind: kpis(inputs, pInd, thr, critHours), reg: kpis(inputs, pReg, thr, critHours) },
+      recs: recommendations(inputs, pReg),
+    };
+  }
+  const DEFAULT = { sc: 'S2', thr: 0.85 };   // the setting both pages open with (main panel default = mini page)
+  return { run, SCENARIOS, DEFAULT, H, spans, spansShort, fmtH, critImpact, topRecs, applyDecisions, hotelView, credits };
+})();
+if (typeof module !== 'undefined') module.exports = BF;
+
+</script>
+<script>
+/* BlueFlex Belek — shared view helpers (formatting and the hourly chart). Embedded at the VIEW marker by build.js. */
+const BFV = (() => {
+  const fmt = (v, d = 0) => v.toLocaleString('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d });
+  const pct = v => '%' + fmt(v * 100, 1);
+  function niceStep(x) { const p = Math.pow(10, Math.floor(Math.log10(x))), m = x / p; return (m <= 1 ? 1 : m <= 2 ? 2 : m <= 5 ? 5 : 10) * p; }
+  // series: [{ v: number[24], c: color, w?, dash?, peak? }], thr: dashed threshold line (or null), crit: critical hours shaded
+  function chart(svg, series, thr, crit, opt = {}) {
+    // drawing size follows the rendered width (min 360), so labels stay at their real pixel size in any column and on phones
+    const W = opt.w || Math.round(Math.max(360, svg.clientWidth || 720)), Hh = opt.h || Math.round(Math.min(340, Math.max(260, W * 0.4))), L = 52, R = 16, T = 28, B = 36, fs = opt.fs || 12;
+    svg.setAttribute('viewBox', `0 0 ${W} ${Hh}`);
+    const all = series.flatMap(s => s.v).concat(thr == null ? [] : [thr]);
+    let max = Math.max(...all, 1e-6) * 1.08; const step = niceStep(max / 5); max = Math.ceil(max / step) * step;
+    const X = h => L + (h + 0.5) * (W - L - R) / 24, Y = v => T + (1 - v / max) * (Hh - T - B);
+    const bw = (W - L - R) / 24;
+    let s = '';
+    crit.forEach(h => s += `<rect x="${(L + h * bw).toFixed(1)}" y="${T}" width="${bw.toFixed(1)}" height="${Hh - T - B}" fill="var(--crit-soft)"/>`);
+    for (let v = 0; v <= max + 1e-9; v += step) s += `<line x1="${L}" x2="${W - R}" y1="${Y(v).toFixed(1)}" y2="${Y(v).toFixed(1)}" stroke="var(--line)" stroke-width="1"/><text x="${L - 8}" y="${(Y(v) + 4).toFixed(1)}" text-anchor="end" font-size="${fs}" fill="var(--muted)" font-family="var(--mono)">${fmt(v, step < 1 ? 1 : 0)}</text>`;
+    for (let h = 0; h < 24; h += W < 480 ? 6 : 3) s += `<text x="${X(h).toFixed(1)}" y="${Hh - 12}" text-anchor="middle" font-size="${fs}" fill="var(--muted)" font-family="var(--mono)">${String(h).padStart(2, '0')}:00</text>`;
+    s += `<text x="${L - 8}" y="${T - 14}" text-anchor="end" font-size="${fs - 1}" fill="var(--muted)">m³/saat</text>`;
+    if (thr != null) {
+      s += `<line x1="${L}" x2="${W - R}" y1="${Y(thr).toFixed(1)}" y2="${Y(thr).toFixed(1)}" stroke="var(--crit)" stroke-width="1.5" stroke-dasharray="6 5"/>`;
+      s += `<text x="${W - R}" y="${(Y(thr) - 6).toFixed(1)}" text-anchor="end" font-size="${fs}" fill="var(--crit)" font-weight="600">eşik ${fmt(thr)}</text>`;
+    }
+    series.forEach(se => {
+      const d = se.v.map((v, h) => `${h ? 'L' : 'M'}${X(h).toFixed(1)} ${Y(v).toFixed(1)}`).join('');
+      s += `<path class="ln" d="${d}" fill="none" stroke="${se.c}" stroke-width="${se.w || 2.25}" ${se.dash ? 'stroke-dasharray="7 5"' : ''} stroke-linejoin="round" stroke-linecap="round"/>`;
+      if (se.peak) { const pk = se.v.indexOf(Math.max(...se.v)); s += `<circle cx="${X(pk).toFixed(1)}" cy="${Y(se.v[pk]).toFixed(1)}" r="4" fill="${se.c}"/>`; }
+    });
+    svg.innerHTML = s;
+  }
+  return { fmt, pct, chart };
+})();
+
+</script>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const { fmt, pct, chart } = BFV;
+  const res = BF.run(BF.DEFAULT.sc, BF.DEFAULT.thr);           // same setting as the main panel's default
+  const top = BF.topRecs(res, 3), decisions = {};
+  const all = {}; res.recs.forEach((r, i) => all[i] = 'ok');
+  const fullRed = BF.applyDecisions(res, all).critRed;
+
+  $('setting').textContent = `Senaryo ${res.sc.name} · bölgesel eşik %${Math.round(BF.DEFAULT.thr * 100)} · 7 kurgusal otel, ${res.inputs.filter(x => x.joined).length}'ü katılıyor`;
+  $('critline').innerHTML = `<strong>${res.critHours.length} kritik saat</strong> (${BF.spans(res.critHours)}): tahmini çekiş eşiği aşıyor. Tahmin, makine öğrenmesi modeliyle 00:00'da yalnız o an bilinen verilerle yapılır.`;
+
+  function render() {
+    $('recs').innerHTML = '';
+    top.forEach(i => {
+      const r = res.recs[i], st = decisions[i] || 'wait';
+      const el = document.createElement('div'); el.className = 'rec'; el.dataset.state = st;
+      el.innerHTML = `<div class="who">${r.hotel} · ${r.cat}</div><div class="txt">${r.text}</div>
+        <div class="acts"><button class="btn ok" aria-pressed="${st === 'ok'}">Onayla</button><button class="btn no" aria-pressed="${st === 'no'}">Reddet</button><span class="eff num">kritik saatlerde −${fmt(BF.critImpact(res, r), 1)} m³</span></div>`;
+      el.querySelector('.ok').addEventListener('click', () => { decisions[i] = 'ok'; render(); });
+      el.querySelector('.no').addEventListener('click', () => { decisions[i] = 'no'; render(); });
+      $('recs').appendChild(el);
+    });
+    const ap = BF.applyDecisions(res, decisions);
+    const series = [{ v: res.k.base.R, c: 'var(--base)', peak: true }];
+    if (Object.values(decisions).includes('ok')) series.push({ v: ap.plan, c: 'var(--accent)', dash: true, w: 2.75 });
+    chart($('c'), series, res.thr, res.critHours);
+    $('red').textContent = pct(ap.critRed);
+    $('rednote').innerHTML = `Plan = onaylanan önerilere göre <em>beklenen</em> çekiş; gerçekleşen yalnız pilotta sayaçla ölçülür. ${res.recs.length} önerinin tamamı onaylanırsa: <span class="num">${pct(fullRed)}</span> (tam panel).`;
+  }
+  let rt; addEventListener('resize', () => { clearTimeout(rt); rt = setTimeout(render, 200); });
+  render();
+})();
+</script>
+
+</body>
+</html>
