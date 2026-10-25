@@ -455,7 +455,10 @@ const BF = (() => {
     const rows = res.inputs.filter(x => x.joined).map(x => ({ hotel: x.name, type: x.type, now: now.byHotel[x.name] || z, full: full.byHotel[x.name] || z }));
     const tot = (k, w) => rows.reduce((s, r) => s + r[w][k], 0);
     const T = w => ({ subst: tot('subst', w), substCrit: tot('substCrit', w), shiftNet: tot('shiftNet', w), shiftCrit: tot('shiftCrit', w) });
-    return { rows, total: T('now'), potential: T('full'), crit0: now.crit0, critDrop: now.crit0 - now.crit1, critDropFull: full.crit0 - full.crit1 };
+    // substitution ratio = substituted volume / joined hotels' network draw over the same 24 h before optimisation
+    const joinedDraw = res.inputs.filter(x => x.joined).reduce((s, x) => s + sum(netOf(x, emptyPlan(x))), 0);
+    return { rows, total: T('now'), potential: T('full'), crit0: now.crit0, critDrop: now.crit0 - now.crit1, critDropFull: full.crit0 - full.crit1, joinedDraw,
+      substShare: joinedDraw > 0 ? T('now').subst / joinedDraw : 0, substShareFull: joinedDraw > 0 ? T('full').subst / joinedDraw : 0 };
   }
 
   // ---------- One full run ----------

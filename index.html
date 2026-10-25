@@ -251,6 +251,7 @@ tr.total td{font-weight:600;border-top:2px solid var(--line)}
         </div>
         <div class="card stack">
           <div class="metric"><span class="v" id="i-subst"></span><span class="l">ikame edilen içme suyu (onaylanan plan, beklenen)</span></div>
+          <div class="metric"><span class="v" id="i-ratio"></span><span class="l">ikame oranı: katılan otellerin optimizasyon öncesi, aynı 24 saatlik toplam şebeke çekişine oranı</span></div>
           <div class="metric"><span class="v" id="i-shift"></span><span class="l">kritik saatten kaydırılan şebeke çekişi (onaylanan plan, beklenen)</span></div>
           <p class="foot" id="i-note"></p>
         </div>
@@ -680,7 +681,10 @@ const BF = (() => {
     const rows = res.inputs.filter(x => x.joined).map(x => ({ hotel: x.name, type: x.type, now: now.byHotel[x.name] || z, full: full.byHotel[x.name] || z }));
     const tot = (k, w) => rows.reduce((s, r) => s + r[w][k], 0);
     const T = w => ({ subst: tot('subst', w), substCrit: tot('substCrit', w), shiftNet: tot('shiftNet', w), shiftCrit: tot('shiftCrit', w) });
-    return { rows, total: T('now'), potential: T('full'), crit0: now.crit0, critDrop: now.crit0 - now.crit1, critDropFull: full.crit0 - full.crit1 };
+    // substitution ratio = substituted volume / joined hotels' network draw over the same 24 h before optimisation
+    const joinedDraw = res.inputs.filter(x => x.joined).reduce((s, x) => s + sum(netOf(x, emptyPlan(x))), 0);
+    return { rows, total: T('now'), potential: T('full'), crit0: now.crit0, critDrop: now.crit0 - now.crit1, critDropFull: full.crit0 - full.crit1, joinedDraw,
+      substShare: joinedDraw > 0 ? T('now').subst / joinedDraw : 0, substShareFull: joinedDraw > 0 ? T('full').subst / joinedDraw : 0 };
   }
 
   // ---------- One full run ----------
@@ -795,7 +799,7 @@ const BFV = (() => {
       ['İkame edilen içme suyu (m³/gün)', q => fmt(q.subst, 1)],
       ['Kaydırılan hacim (m³)', q => fmt(q.shifted, 1)],
       ['Korunan kullanımlarda değişiklik (m³)', q => fmt(q.protectedChange, 1)],
-      ['Operasyon kısıtı ihlali (adet)', q => fmt(q.violations)],
+      ['Modellenen operasyon kısıtlarında ihlal (adet)', q => fmt(q.violations)],
     ];
     $('t2').innerHTML = `<tr><th>Gösterge</th><th class="n">1 · Mevcut</th><th class="n">2 · Bağımsız</th><th class="n">3 · BlueFlex</th></tr>` +
       rows.map(([l, f]) => `<tr><td>${l}</td><td class="n">${f(k.base)}</td><td class="n">${f(k.ind)}</td><td class="n">${f(k.reg)}</td></tr>`).join('');
@@ -895,7 +899,8 @@ const BFV = (() => {
     $('i-crit').textContent = res.critHours.length ? `${res.critHours.length} saat (${BF.spans(res.critHours)})` : 'kritik saat yok';
     $('i-subst').textContent = fmt(t.subst, 1) + ' m³';
     $('i-shift').textContent = fmt(t.shiftCrit, 1) + ' m³';
-    $('i-note').innerHTML = `<strong>Bölgeye beklenen etki:</strong> kritik saatlerdeki çekiş <span class="num">${fmt(c.critDrop, 1)}</span> m³ (<span class="num">${sh(c.critDrop)}</span>) azalıyor = ikamenin kritik saatlere düşen kısmı <span class="num">${fmt(t.substCrit, 1)}</span> + kaydırmanın net etkisi <span class="num">${fmt(t.shiftNet, 1)}</span> m³. Bütün öneriler onaylanırsa: <span class="num">${fmt(c.critDropFull, 1)}</span> m³ (<span class="num">${sh(c.critDropFull)}</span>), Bölge görünümündeki "kritik saatlerde beklenen azalma" ile aynı hesap.`;
+    $('i-ratio').textContent = pct(c.substShare);
+    $('i-note').innerHTML = `<strong>Bölgeye beklenen etki:</strong> kritik saatlerdeki çekiş <span class="num">${fmt(c.critDrop, 1)}</span> m³ (<span class="num">${sh(c.critDrop)}</span>) azalıyor = ikamenin kritik saatlere düşen kısmı <span class="num">${fmt(t.substCrit, 1)}</span> + kaydırmanın net etkisi <span class="num">${fmt(t.shiftNet, 1)}</span> m³. Bütün öneriler onaylanırsa: <span class="num">${fmt(c.critDropFull, 1)}</span> m³ (<span class="num">${sh(c.critDropFull)}</span>), ikame oranı <span class="num">${pct(c.substShareFull)}</span>; Bölge görünümündeki "kritik saatlerde beklenen azalma" ile aynı hesap.`;
     $('tcredit').innerHTML = `<tr><th>Otel</th><th>Tür</th><th class="n">İkame (m³)</th><th class="n">Kritik saatten kaydırma (m³)</th><th class="n">Tümü onaylanırsa: ikame</th><th class="n">Tümü onaylanırsa: kaydırma</th></tr>` +
       (c.rows.length ? c.rows.map(r => `<tr><td>${r.hotel}</td><td>${r.type}</td><td class="n">${fmt(r.now.subst, 1)}</td><td class="n">${fmt(r.now.shiftCrit, 1)}</td><td class="n">${fmt(r.full.subst, 1)}</td><td class="n">${fmt(r.full.shiftCrit, 1)}</td></tr>`).join('') +
         `<tr class="total"><td>Toplam</td><td></td><td class="n">${fmt(t.subst, 1)}</td><td class="n">${fmt(t.shiftCrit, 1)}</td><td class="n">${fmt(P.subst, 1)}</td><td class="n">${fmt(P.shiftCrit, 1)}</td></tr>` : `<tr><td colspan="6" class="muted">Bu senaryoda pilotta otel yok.</td></tr>`);
